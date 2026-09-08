@@ -1,7 +1,7 @@
-package alocaufsc.controllers;
+package alocaufsc.entrypoint;
 
 import alocaufsc.domain.allocationsystem.Venue;
-import alocaufsc.technicalservices.persistence.FacadeDbRest;
+import alocaufsc.domain.allocationsystem.VenueService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,30 +11,29 @@ import java.util.List;
 @CrossOrigin(origins = "*") // Allows Flutter calls during local development
 public class VenueController {
 
-    private final FacadeDbRest facadeDbRest;
+    private final VenueService venueService;
 
-    public VenueController(FacadeDbRest facadeDbRest) {
-        this.facadeDbRest = facadeDbRest;
+    public VenueController(VenueService venueService) {
+        this.venueService = venueService;
     }
 
     @GetMapping
     public List<Venue> getAllVenues() {
-        return facadeDbRest.findAllVenues();
+        return venueService.getAllVenues();
     }
 
     @PostMapping
     public Venue createVenue(@RequestBody Venue venue) {
-        return facadeDbRest.save(venue);
+        return venueService.createVenue(venue);
     }
 
     @PutMapping("/{id}")
     public Venue updateVenue(@PathVariable String id, @RequestBody Venue venue) {
-        venue.setId(id);
-        return facadeDbRest.save(venue);
+        return venueService.updateVenue(id, venue);
     }
 
     @DeleteMapping("/{id}")
     public void deleteVenue(@PathVariable String id) {
-        facadeDbRest.deleteVenueById(id);
+        venueService.deleteVenue(id);
     }
 }

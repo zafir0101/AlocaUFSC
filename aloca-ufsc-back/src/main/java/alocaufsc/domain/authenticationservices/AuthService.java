@@ -1,12 +1,12 @@
-package alocaufsc.technicalservices.authentication;
+package alocaufsc.domain.authenticationservices;
 
-import alocaufsc.controllers.DTO.AuthResponse;
-import alocaufsc.controllers.DTO.CadastroRequest;
-import alocaufsc.controllers.DTO.LoginRequest;
-import alocaufsc.controllers.DTO.RefreshTokenRequest;
+import alocaufsc.entrypoint.DTO.AuthResponse;
+import alocaufsc.entrypoint.DTO.CadastroRequest;
+import alocaufsc.entrypoint.DTO.LoginRequest;
+import alocaufsc.entrypoint.DTO.RefreshTokenRequest;
 import alocaufsc.domain.entities.*;
+import alocaufsc.technicalservices.authentication.TokenService;
 import alocaufsc.technicalservices.persistence.*;
-import org.apache.el.parser.Token;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -15,7 +15,6 @@ import static alocaufsc.domain.entities.Entity.*;
 
 @Service
 public class AuthService {
-
     private final FacadeDbRest facadeDbRest;
     private final TokenService tokenService;
 

@@ -1,7 +1,7 @@
-package alocaufsc.controllers;
+package alocaufsc.entrypoint;
 
-import alocaufsc.controllers.DTO.*;
-import alocaufsc.technicalservices.authentication.AuthService;
+import alocaufsc.entrypoint.DTO.*;
+import alocaufsc.domain.authenticationservices.AuthService;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

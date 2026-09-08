@@ -13,7 +13,7 @@ class _CalculatorState extends State<CalculatorScreen> {
   final _num1 = TextEditingController();
   final _num2 = TextEditingController();
 
-  late Future<String?> _result;
+  Future<String?>? _result;
 
   void _submit(String op) {
     setState(() {
@@ -57,7 +57,7 @@ class _CalculatorState extends State<CalculatorScreen> {
                     keyboardType: TextInputType.number,
                     controller: _num2,
                     decoration: const InputDecoration(
-                      labelText: "Número 1",
+                      labelText: "Número 2",
                       border: OutlineInputBorder(),
                     ),
                   ),

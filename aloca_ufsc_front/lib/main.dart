@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'user_interface/calculadora/calculator_screen.dart';
+import 'user_interface/auth_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: CalculatorScreen(),
+      home: AuthScreen(),
     );
   }
 }

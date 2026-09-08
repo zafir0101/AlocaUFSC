@@ -1,4 +1,4 @@
-package alocaufsc.Controllers.DTO;
+package alocaufsc.controllers.DTO;
 
 public record AuthResponse(
         String token,

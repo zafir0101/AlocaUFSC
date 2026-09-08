@@ -1,10 +1,10 @@
 package alocaufsc.technicalservices.persistence;
 
+import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
 import org.springframework.stereotype.Repository;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 public class FacadeDbRest {
@@ -15,8 +15,20 @@ public class FacadeDbRest {
     }
 
     public User save(User user) {
-        mockData.saveUser(user);
+        mockData.save(user);
         return user;
+    }
+
+    public Venue save(Venue venue) {
+        if (venue.getId() == null || venue.getId().isEmpty()) {
+            venue.setId(UUID.randomUUID().toString());
+        }
+        mockData.save(venue);
+        return venue;
+    }
+
+    public List<Venue> findAllVenues() {
+        return mockData.findAllVenues();
     }
 
     public Optional<User> findByEmail(String email) {
@@ -39,7 +51,7 @@ public class FacadeDbRest {
         mockData.removeRefreshToken(refreshToken);
     }
 
-    public Map<String, User> findAllUsers() {
-        return mockData.getUsersByEmail();
+    public void deleteVenueById(String id) {
+        mockData.deleteVenueById(id);
     }
 }

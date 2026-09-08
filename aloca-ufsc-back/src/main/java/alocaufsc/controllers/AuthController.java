@@ -1,6 +1,6 @@
-package alocaufsc.Controllers;
+package alocaufsc.controllers;
 
-import alocaufsc.Controllers.DTO.*;
+import alocaufsc.controllers.DTO.*;
 import alocaufsc.technicalservices.authentication.AuthService;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.http.HttpStatus;
@@ -15,11 +15,10 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final FacadeDbRest facadeDbRest;
 
     public AuthController(AuthService authService, FacadeDbRest facadeDbRest) {
         this.authService = authService;
-        this.facadeDbRest = facadeDbRest;
+
     }
 
     @PostMapping("/cadastro")
@@ -50,10 +49,5 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("mensagem", e.getMessage()));
         }
-    }
-
-    @GetMapping("/debug")
-    public ResponseEntity<?> listarUsuarios() {
-        return ResponseEntity.ok(facadeDbRest.findAllUsers());
     }
 }

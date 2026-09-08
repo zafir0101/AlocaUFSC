@@ -1,4 +1,4 @@
-package alocaufsc.Controllers.DTO;
+package alocaufsc.controllers.DTO;
 
 import alocaufsc.domain.entities.Entity;
 

@@ -1,12 +1,12 @@
 package alocaufsc.technicalservices.authentication;
 
-import alocaufsc.Controllers.*;
-import alocaufsc.Controllers.DTO.AuthResponse;
-import alocaufsc.Controllers.DTO.CadastroRequest;
-import alocaufsc.Controllers.DTO.LoginRequest;
-import alocaufsc.Controllers.DTO.RefreshTokenRequest;
+import alocaufsc.controllers.DTO.AuthResponse;
+import alocaufsc.controllers.DTO.CadastroRequest;
+import alocaufsc.controllers.DTO.LoginRequest;
+import alocaufsc.controllers.DTO.RefreshTokenRequest;
 import alocaufsc.domain.entities.*;
 import alocaufsc.technicalservices.persistence.*;
+import org.apache.el.parser.Token;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -17,11 +17,11 @@ import static alocaufsc.domain.entities.Entity.*;
 public class AuthService {
 
     private final FacadeDbRest facadeDbRest;
-    private final JwtService jwtService;
+    private final TokenService tokenService;
 
-    public AuthService(FacadeDbRest facadeDbRest, JwtService jwtService) {
+    public AuthService(FacadeDbRest facadeDbRest, TokenService tokenService) {
         this.facadeDbRest = facadeDbRest;
-        this.jwtService = jwtService;
+        this.tokenService = tokenService;
     }
 
     public AuthResponse cadastrar(CadastroRequest request) {
@@ -65,8 +65,8 @@ public class AuthService {
     }
 
     private AuthResponse gerarTokens(User usuario) {
-        String accessToken = jwtService.generateAccessToken(usuario.getEmail(), usuario.getTipoPerfil().name());
-        String refreshToken = jwtService.generateRefreshToken(usuario.getEmail());
+        String accessToken = tokenService.generateAccessToken(usuario.getEmail(), usuario.getTipoPerfil().name());
+        String refreshToken = tokenService.generateRefreshToken(usuario.getEmail());
 
         facadeDbRest.saveRefreshToken(refreshToken, usuario.getEmail());
 

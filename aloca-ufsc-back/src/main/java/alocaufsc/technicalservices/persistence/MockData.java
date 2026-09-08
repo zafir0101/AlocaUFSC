@@ -1,19 +1,24 @@
 package alocaufsc.technicalservices.persistence;
 
+import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class MockData {
     private final Map<String, User> usersByEmail = new ConcurrentHashMap<>();
-    private final Map<String, String> refreshTokens = new ConcurrentHashMap<>(); // RefreshToken -> Email
+    private final Map<String, String> refreshTokens = new ConcurrentHashMap<>();
+    private final Map<String, Venue> venues = new HashMap<>();
 
-    public void saveUser(User user) {
+    public void save(User user) {
         usersByEmail.put(user.getEmail().toLowerCase(), user);
+    }
+
+    public void save(Venue venue) {
+        venues.put(venue.getId(), venue);
     }
 
     public Optional<User> findByEmail(String email) {
@@ -36,7 +41,15 @@ public class MockData {
         refreshTokens.remove(token);
     }
 
-    public Map<String, User> getUsersByEmail() {
-        return usersByEmail;
+    public List<Venue> findAllVenues() {
+        return new ArrayList<>(venues.values());
+    }
+
+    public Optional<Venue> findById(String id) {
+        return Optional.ofNullable(venues.get(id));
+    }
+
+    public void deleteVenueById(String id) {
+        venues.remove(id);
     }
 }

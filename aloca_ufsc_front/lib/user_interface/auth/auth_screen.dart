@@ -1,7 +1,9 @@
-import 'dart:convert';
-
+import 'package:aloca_ufsc_front/api/auth_service.dart';
+import 'package:aloca_ufsc_front/user_interface/auth/auth_model.dart';
+import 'package:aloca_ufsc_front/user_interface/home/home_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+
+import '../allocation/manage_venue/venue_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -10,46 +12,30 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-enum TipoPerfil { discente, docente, organizacao, administrador }
+enum Entity { discente, docente, organizacao, administrador }
 
-extension TipoPerfilInfo on TipoPerfil {
+extension EntityInfo on Entity {
   String get label {
     switch (this) {
-      case TipoPerfil.discente:
+      case Entity.discente:
         return 'Discente';
-      case TipoPerfil.docente:
+      case Entity.docente:
         return 'Docente';
-      case TipoPerfil.organizacao:
+      case Entity.organizacao:
         return 'Organização';
-      case TipoPerfil.administrador:
+      case Entity.administrador:
         return 'Administrador';
     }
   }
-
-  // Campo extra que cada perfil precisa informar no cadastro,
-  // usado pelo backend para preencher a entidade correta.
-  // String get campoIdentificador {
-  // switch (this) {
-  //   case TipoPerfil.discente:
-  //     return 'Matrícula';
-  //   case TipoPerfil.docente:
-  //     return 'SIAPE';
-  //   case TipoPerfil.organizacao:
-  //     return 'CNPJ';
-  //   case TipoPerfil.administrador:
-  //     return 'Código de acesso';
-  // }
-  // }
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  // Troque pelo endereço real da sua API Spring Boot.
-  static const String baseUrl = 'http://10.0.2.2:8080/api/auth';
+  final AuthService _authService = AuthService();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = true;
   bool _carregando = false;
-  TipoPerfil _tipoSelecionado = TipoPerfil.discente;
+  Entity _tipoSelecionado = Entity.discente;
 
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
@@ -75,52 +61,53 @@ class _AuthScreenState extends State<AuthScreen> {
 
     setState(() => _carregando = true);
 
-    final endpoint = _isLogin ? '$baseUrl/login' : '$baseUrl/cadastro';
-    final corpo = _isLogin
-        ? {
-            'email': _emailController.text.trim(),
-            'senha': _senhaController.text,
-          }
-        : {
-            'nomeCompleto': _nomeController.text.trim(),
-            'email': _emailController.text.trim(),
-            'senha': _senhaController.text,
-            'entity': _tipoSelecionado.name.toUpperCase(),
-            'identificador': _identificadorController.text.trim(),
-          };
-
     try {
-      final resposta = await http.post(
-        Uri.parse(endpoint),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(corpo),
-      );
+      final AuthResponse response;
+
+      if (_isLogin) {
+        final loginReq = LoginRequest(
+          email: _emailController.text.trim(),
+          senha: _senhaController.text,
+        );
+        response = await _authService.login(loginReq);
+      } else {
+        final signUpReq = SignUpRequest(
+          nomeCompleto: _nomeController.text.trim(),
+          email: _emailController.text.trim(),
+          senha: _senhaController.text,
+          entity: _tipoSelecionado.name.toUpperCase(),
+          identificador: _identificadorController.text.trim(),
+        );
+        response = await _authService.signUp(signUpReq);
+      }
 
       if (!mounted) return;
 
-      if (resposta.statusCode == 200 || resposta.statusCode == 201) {
-        final dados = jsonDecode(resposta.body);
-        // posteriormente guardar em cache o token
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isLogin
-                  ? 'Login realizado com sucesso.'
-                  : 'Cadastro realizado com sucesso.',
-            ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isLogin
+                ? 'Login realizado com sucesso.'
+                : 'Cadastro realizado com sucesso.',
           ),
+        ),
+      );
+
+      if (response.entity == 'ADMINISTRADOR') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const VenueScreen()),
         );
       } else {
-        final erro = jsonDecode(resposta.body);
-        print(erro);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(erro['mensagem'] ?? 'Algo deu errado.')),
-        );
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeScreen()));
       }
     } catch (e) {
       if (!mounted) return;
+
+      final mensagemErro = e.toString().replaceFirst('Exception: ', '');
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível conectar ao servidor.')),
+        SnackBar(content: Text(mensagemErro)),
       );
     } finally {
       if (mounted) setState(() => _carregando = false);
@@ -146,7 +133,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     Icon(Icons.school_outlined, size: 48, color: azulPrincipal),
                     const SizedBox(height: 12),
                     Text(
-                      'Comunidade UFSC',
+                      'AlocaUFSC',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,
@@ -280,7 +267,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: TipoPerfil.values.map((tipo) {
+      children: Entity.values.map((tipo) {
         final selecionado = tipo == _tipoSelecionado;
         return ChoiceChip(
           label: Text(tipo.label),
@@ -302,10 +289,10 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   TextStyle get _rotuloEstilo => const TextStyle(
-    fontSize: 13,
-    color: Colors.black54,
-    fontWeight: FontWeight.w500,
-  );
+        fontSize: 13,
+        color: Colors.black54,
+        fontWeight: FontWeight.w500,
+      );
 
   Widget _campoTexto({
     required TextEditingController controller,

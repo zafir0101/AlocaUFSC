@@ -2,13 +2,11 @@ package alocaufsc.technicalservices.authentication;
 
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.UUID;
 
 @Service
-public class JwtService {
+public class TokenService {
 
-    // Simulação simplificada de geração de tokens JWT e Refresh Tokens
     public String generateAccessToken(String email, String role) {
         return "access_token_" + UUID.randomUUID() + "_" + email;
     }

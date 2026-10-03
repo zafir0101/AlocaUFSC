@@ -15,8 +15,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Início'),
-        centerTitle: true,
+        title: const Text('AlocaUFSC'),
       ),
       body: Center(
         child: ElevatedButton.icon(

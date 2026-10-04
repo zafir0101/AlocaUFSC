@@ -1,39 +1,56 @@
+enum Entity { student, professor, organization, manager }
+
+extension EntityInfo on Entity {
+String get label {
+    switch (this) {
+        case Entity.student:
+            return 'Discente';
+        case Entity.professor:
+            return 'Docente';
+        case Entity.organization:
+            return 'Organização';
+        case Entity.manager:
+            return 'Administrador';
+    }
+}
+}
+
 class LoginRequest {
   final String email;
-  final String senha;
+  final String password;
 
-  LoginRequest({required this.email, required this.senha});
+  LoginRequest({required this.email, required this.password});
 
   Map<String, dynamic> toJson() {
     return {
       'email': email,
-      'senha': senha,
+      'senha': password,
     };
   }
 }
 
 class SignUpRequest {
-  final String nomeCompleto;
+  final String fullName;
   final String email;
-  final String senha;
+  final String password;
   final String entity;
-  final String identificador;
+  final String id;
 
   SignUpRequest({
-    required this.nomeCompleto,
+    required this.fullName,
     required this.email,
-    required this.senha,
+    required this.password,
     required this.entity,
-    required this.identificador,
+    required this.id,
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'nomeCompleto': nomeCompleto,
+      'nomeCompleto': fullName,
       'email': email,
-      'senha': senha,
+      'senha': password,
       'entity': entity,
-      'identificador': identificador,
+      'identificador': id,
     };
   }
 }

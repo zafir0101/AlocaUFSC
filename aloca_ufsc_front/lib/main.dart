@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'user_interface/theme.dart';
 import 'user_interface/auth/auth_screen.dart';
 import 'user_interface/home/home_screen.dart';
 
@@ -17,10 +18,7 @@ class MyApp extends StatelessWidget {
             home: HomeScreen(), 
             title: 'Aloca UFSC',
             debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-                colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-                useMaterial3: true,
-            ),
+            theme: buildTheme(),
         );
     }
 }

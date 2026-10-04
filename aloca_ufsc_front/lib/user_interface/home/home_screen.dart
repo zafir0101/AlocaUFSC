@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../auth/auth_screen.dart';
+import '../theme.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,7 +16,15 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AlocaUFSC'),
+        title: 
+            const Text(
+                'AlocaUFSC',
+                style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.mainBlue,
+                ),
+          
       ),
       body: Center(
         child: ElevatedButton.icon(

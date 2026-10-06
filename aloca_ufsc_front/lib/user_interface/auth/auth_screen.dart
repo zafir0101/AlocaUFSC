@@ -1,8 +1,8 @@
 import 'package:aloca_ufsc_front/api/auth_service.dart';
 import 'package:aloca_ufsc_front/user_interface/auth/auth_model.dart';
 import 'package:aloca_ufsc_front/user_interface/home/home_screen.dart';
-import 'package:aloca_ufsc_front/user_interface/theme.dart';
-import 'package:aloca_ufsc_front/user_interface/widgets/misc_widgets.dart';
+import 'package:aloca_ufsc_front/theme.dart';
+import 'package:aloca_ufsc_front/widgets.dart';
 import 'package:flutter/material.dart';
 
 import '../allocation/manage_venue/venue_screen.dart';

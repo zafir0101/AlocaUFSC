@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'user_interface/theme.dart';
+import 'theme.dart';
 import 'user_interface/auth/auth_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const AlocaUFSC());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class AlocaUFSC extends StatelessWidget {
+  const AlocaUFSC({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: AuthScreen(),
+      // Começa no login: os eventos precisam saber quem é o usuário. Depois do login vai para o RootShell.
+      home: const AuthScreen(),
       title: 'Aloca UFSC',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),

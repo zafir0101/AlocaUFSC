@@ -1,4 +1,4 @@
-import 'package:aloca_ufsc_front/user_interface/theme.dart';
+import 'package:aloca_ufsc_front/theme.dart';
 import 'package:flutter/material.dart';
 
 Widget textField ({

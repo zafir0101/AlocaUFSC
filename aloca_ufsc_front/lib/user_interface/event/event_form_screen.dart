@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../api/event_service.dart';
-import '../theme.dart';
-import '../widgets/misc_widgets.dart';
+import '../../theme.dart';
+import '../../widgets.dart';
 import 'event_detail_screen.dart';
 import 'event_model.dart';
 

@@ -13,6 +13,8 @@ class AppColors {
 
     static const textPrimary = Color(0xFF20261F);
     static const textSecondary = Color(0xFF8B928A);
+
+    static const shadow = Color(0x14000000);
 }
 
 ThemeData buildTheme() {

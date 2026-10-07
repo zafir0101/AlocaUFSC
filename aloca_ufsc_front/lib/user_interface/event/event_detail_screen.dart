@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api/event_service.dart';
-import '../theme.dart';
+import '../../theme.dart';
 import 'event_form_screen.dart';
 import 'event_model.dart';
 

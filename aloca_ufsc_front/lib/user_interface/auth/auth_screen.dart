@@ -1,4 +1,5 @@
 import 'package:aloca_ufsc_front/api/auth_service.dart';
+import 'package:aloca_ufsc_front/api/session.dart';
 import 'package:aloca_ufsc_front/user_interface/auth/auth_model.dart';
 import 'package:aloca_ufsc_front/user_interface/home/home_screen.dart';
 import 'package:aloca_ufsc_front/user_interface/theme.dart';
@@ -64,6 +65,8 @@ class _AuthScreenState extends State<AuthScreen> {
         response = await _authService.signUp(signUpReq);
       }
 
+      Session.token = response.token;
+      Session.userName = response.name;
             if (!mounted) return;
 
             ScaffoldMessenger.of(context).showSnackBar(

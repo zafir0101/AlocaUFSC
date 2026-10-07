@@ -2,6 +2,7 @@ package alocaufsc.technicalservices.persistence;
 
 import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
+import alocaufsc.domain.eventsystem.Event;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -53,5 +54,29 @@ public class FacadeDbRest {
 
     public void deleteVenueById(String id) {
         mockData.deleteVenueById(id);
+    }
+
+    public void saveAccessToken(String accessToken, String email) {
+        mockData.saveAccessToken(accessToken, email);
+    }
+
+    public Optional<String> findEmailByAccessToken(String accessToken) {
+        return mockData.getEmailByAccessToken(accessToken);
+    }
+
+    public Event saveEvent(Event event) {
+        if (event.getId() == null) {
+            event.setId(mockData.nextEventId());
+        }
+        mockData.save(event);
+        return event;
+    }
+
+    public Optional<Event> findEvent(Long eventId) {
+        return mockData.findEventById(eventId);
+    }
+
+    public List<Event> findEventsByCreator(User creator) {
+        return mockData.findEventsByCreatorId(creator.getId());
     }
 }

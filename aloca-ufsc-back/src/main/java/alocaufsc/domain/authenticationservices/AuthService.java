@@ -9,6 +9,7 @@ import alocaufsc.technicalservices.authentication.TokenService;
 import alocaufsc.technicalservices.persistence.*;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static alocaufsc.domain.entities.Entity.*;
@@ -63,10 +64,19 @@ public class AuthService {
         return gerarTokens(usuario);
     }
 
+    public Optional<User> findUserByAccessToken(String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) {
+            return Optional.empty();
+        }
+        return facadeDbRest.findEmailByAccessToken(accessToken)
+                .flatMap(facadeDbRest::findByEmail);
+    }
+
     private AuthResponse gerarTokens(User usuario) {
         String accessToken = tokenService.generateAccessToken(usuario.getEmail(), usuario.getTipoPerfil().name());
         String refreshToken = tokenService.generateRefreshToken(usuario.getEmail());
 
+        facadeDbRest.saveAccessToken(accessToken, usuario.getEmail());
         facadeDbRest.saveRefreshToken(refreshToken, usuario.getEmail());
 
         return new AuthResponse(

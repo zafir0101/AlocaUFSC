@@ -59,11 +59,13 @@ class AuthResponse {
   final String? token;
   final String? refreshToken;
   final String? entity;
+  final String? name;
 
   AuthResponse({
     this.token,
     this.refreshToken,
     this.entity,
+    this.name,
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
@@ -71,6 +73,7 @@ class AuthResponse {
       token: json['token'],
       refreshToken: json['refreshToken'],
       entity: json['tipoPerfil'],
+      name: json['nomeCompleto'],
     );
   }
 }

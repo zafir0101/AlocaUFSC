@@ -1,11 +1,10 @@
 import 'package:aloca_ufsc_front/api/auth_service.dart';
+import 'package:aloca_ufsc_front/api/session.dart';
 import 'package:aloca_ufsc_front/user_interface/auth/auth_model.dart';
-import 'package:aloca_ufsc_front/user_interface/home/home_screen.dart';
+import 'package:aloca_ufsc_front/shell.dart';
 import 'package:aloca_ufsc_front/theme.dart';
 import 'package:aloca_ufsc_front/widgets.dart';
 import 'package:flutter/material.dart';
-
-import '../allocation/manage_venue/venue_screen.dart';
 
 class AuthScreen extends StatefulWidget {
     const AuthScreen({super.key});
@@ -64,6 +63,8 @@ class _AuthScreenState extends State<AuthScreen> {
         response = await _authService.signUp(signUpReq);
       }
 
+      Session.token = response.token;
+      Session.userName = response.name;
             if (!mounted) return;
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -76,14 +77,10 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
             );
 
-            if (response.entity == 'ADMINISTRADOR') {
+        // Todos os perfis vão para o RootShell (Eventos, Home e Alocações).
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const VenueScreen()),
+        MaterialPageRoute(builder: (context) => const RootShell()),
         );
-      } else {
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomeScreen()));
-      }
         } catch (e) {
             if (!mounted) return;
 

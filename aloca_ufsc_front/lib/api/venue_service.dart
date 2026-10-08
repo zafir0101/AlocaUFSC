@@ -1,49 +1,65 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
-import '../user_interface/allocation/manage_venue/venue_model.dart';
+import '../models/venue_model.dart';
+import '../models/api_model.dart';
+import '../models/auth_model.dart';
 
-class VenueService {
-  static const String baseUrl = 'http://10.0.2.2:8080/api/venues';
+const String baseUrl = 'http://10.0.2.2:8080/api/venues';
 
-  Future<List<Venue>> fetchVenues() async {
-    final response = await http.get(Uri.parse(baseUrl));
+ApiRequest<List<Venue>> fetchVenues(AccessToken accessToken) async {
+    final response = await http.get(
+        Uri.parse(baseUrl),
+        headers: {
+            'Authorization': 'Bearer $accessToken',
+        },
+    );
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);
-      return body.map((json) => Venue.fromJson(json)).toList();
+      return Result.ok(body.map((json) => Venue.fromJson(json)).toList());
     }
-    throw Exception('Failed to load venues');
-  }
+    return Result.error(jsonDecode(response.body));
+}
 
-  Future<Venue> createVenue(Venue venue) async {
+ApiRequest<Venue> createVenue(Venue venue, AccessToken accessToken) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(venue.toJson()),
+        Uri.parse(baseUrl),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode(venue.toJson()),
     );
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return Venue.fromJson(jsonDecode(response.body));
+      return Result.ok(Venue.fromJson(jsonDecode(response.body)));
     }
-    throw Exception('Failed to create venue');
-  }
+    return Result.error(jsonDecode(response.body));
+}
 
-  Future<Venue> updateVenue(String id, Venue venue) async {
+ApiRequest<Venue> updateVenue(String id, Venue venue, AccessToken accessToken) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/$id'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(venue.toJson()),
+        Uri.parse('$baseUrl/$id'),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+        },
+        body: jsonEncode(venue.toJson()),
     );
     if (response.statusCode == 200) {
-      return Venue.fromJson(jsonDecode(response.body));
+      return Result.ok(Venue.fromJson(jsonDecode(response.body)));
     }
-    throw Exception('Failed to update venue');
-  }
+    return Result.error(jsonDecode(response.body));
+}
 
-  Future<void> deleteVenue(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$id'));
+ApiRequest<void> deleteVenue(String id, AccessToken accessToken) async {
+    final response = await http.delete(
+        Uri.parse('$baseUrl/$id'),
+        headers: {
+            'Authorization': 'Bearer $accessToken',
+        },
+    );
     if (response.statusCode != 200) {
-      throw Exception('Failed to delete venue');
+        return Result.error(jsonDecode(response.body));
     }
-  }
+    return Result.ok(());
 }

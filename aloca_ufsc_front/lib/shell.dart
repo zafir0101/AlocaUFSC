@@ -1,4 +1,4 @@
-import "package:aloca_ufsc_front/user_interface/allocation/manage_venue/venue_screen.dart";
+import "package:aloca_ufsc_front/user_interface/allocation/venue_screen.dart";
 import "package:flutter/material.dart";
 import "user_interface/home/home_screen.dart";
 import "user_interface/event/event_screen.dart";

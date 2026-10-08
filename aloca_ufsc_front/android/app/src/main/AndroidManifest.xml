@@ -2,6 +2,7 @@
     <application
         android:label="aloca_ufsc_front"
         android:name="${applicationName}"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

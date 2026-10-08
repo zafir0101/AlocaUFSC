@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
-import '../../../api/venue_service.dart';
-import '../../auth/auth_screen.dart';
-import 'venue_model.dart';
+import '../../models/venue_model.dart';
 import '../../../theme.dart';
+import '../../../main.dart';
+import '../../../widgets.dart';
+import '../../models/api_model.dart';
 
 class VenueScreen extends StatefulWidget {
-    const VenueScreen({Key? key}) : super(key: key);
+    const VenueScreen({super.key});
 
     @override
     State<VenueScreen> createState() => _VenueScreenState();
 }
 
 class _VenueScreenState extends State<VenueScreen> {
-    final VenueService _venueService = VenueService();
-    late Future<List<Venue>> _venuesFuture;
+    late ApiRequest<List<Venue>> _venuesFuture;
 
     @override
     void initState() {
         super.initState();
-        _refreshVenues();
+        _venuesFuture = appState.fetchVenues();
     }
 
-    void _refreshVenues() {
+    Future<bool> _refreshVenues() async {
+        final result = await appState.fetchVenues();
         setState(() {
-            _venuesFuture = _venueService.fetchVenues();
+            _venuesFuture = Future.value(result);
         });
+
+        return (result.isOk);
     }
 
     void _openVenueForm({Venue? venue}) {
@@ -76,13 +79,19 @@ class _VenueScreenState extends State<VenueScreen> {
                             );
 
                             if (venue == null) {
-                await _venueService.createVenue(newVenue);
-              } else {
-                await _venueService.updateVenue(venue.id!, newVenue);
-              }
+                                appState.createVenue(newVenue).then((result) {
+                                if (result.isError && context.mounted) showToast(context, "Não foi possível criar o Espaço");
+                                });
+                         } else {
+                                appState.updateVenue(venue.id!, newVenue).then((result) {
+                                if (result.isError && context.mounted) showToast(context, "Não foi possível atualizar o Espaço");
+                                });
+                         }
 
                             if (mounted) Navigator.pop(context);
-                            _refreshVenues();
+                            _refreshVenues().then((hasLoad) {
+                                if (!hasLoad && context.mounted) showToast(context, "Não foi possível carregar os Espaços");
+                            });
                         },
                         child: const Text('Salvar'),
                     ),
@@ -105,18 +114,18 @@ class _VenueScreenState extends State<VenueScreen> {
                     ),
                 ),
             ),
-            body: FutureBuilder<List<Venue>>(
+            body: FutureBuilder(
                 future: _venuesFuture,
                 builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          } else if (!snapshot.hasData || snapshot.data!.data!.isEmpty) {
             return const Center(child: Text('Sem espaços cadastrados'));
           }
 
-                    final venues = snapshot.data!;
+                    final venues = snapshot.data!.data!;
                     return ListView.builder(
                         itemCount: venues.length,
                         itemBuilder: (context, index) {
@@ -140,7 +149,9 @@ class _VenueScreenState extends State<VenueScreen> {
                                                 icon: const Icon(Icons.delete, color: Colors.red),
                                                 onPressed: () async {
                                                     if (item.id != null) {
-                            await _venueService.deleteVenue(item.id!);
+                            appState.deleteVenue(item.id!).then((result) {
+                                if (result.isError && context.mounted) showToast(context, "Não foi possível deletar o Espaço");
+                            });
                             _refreshVenues();
                           }
                                                 },

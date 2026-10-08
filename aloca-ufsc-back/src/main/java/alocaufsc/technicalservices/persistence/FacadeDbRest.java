@@ -2,6 +2,7 @@ package alocaufsc.technicalservices.persistence;
 
 import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
+import alocaufsc.domain.eventsystem.Event;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -27,11 +28,27 @@ public class FacadeDbRest {
         return venue;
     }
 
+    public Event saveEvent(Event event) {
+        if (event.getId() == null) {
+            event.setId(mockData.nextEventId());
+        }
+        mockData.saveEvent(event);
+        return event;
+    }
+
+    public void saveRefreshToken(String refreshToken, String email) {
+        mockData.saveRefreshToken(refreshToken, email);
+    }
+
+    public void saveAccessToken(String accessToken, String email) {
+        mockData.saveAccessToken(accessToken, email);
+    }
+
     public List<Venue> findAllVenues() {
         return mockData.findAllVenues();
     }
 
-    public Optional<User> findByEmail(String email) {
+    public Optional<User> findUserByEmail(String email) {
         return mockData.findByEmail(email);
     }
 
@@ -39,19 +56,25 @@ public class FacadeDbRest {
         return mockData.existsByEmail(email);
     }
 
-    public void saveRefreshToken(String refreshToken, String email) {
-        mockData.saveRefreshToken(refreshToken, email);
+    public Optional<User> findUserbyAccessToken(String token) {
+        Optional<String> email = mockData.getEmailByAccessToken(token);
+        return email.map(this::findUserByEmail).orElse(null);
     }
 
-    public Optional<String> findEmailByRefreshToken(String refreshToken) {
-        return mockData.getEmailByRefreshToken(refreshToken);
-    }
-
-    public void deleteRefreshToken(String refreshToken) {
-        mockData.removeRefreshToken(refreshToken);
+    public Optional<User> findUserbyRefreshToken(String token) {
+        Optional<String> email = mockData.getEmailByRefreshToken(token);
+        return email.map(this::findUserByEmail).orElse(null);
     }
 
     public void deleteVenueById(String id) {
         mockData.deleteVenueById(id);
+    }
+
+    public Optional<Event> findEvent(Long eventId) {
+        return mockData.findEventById(eventId);
+    }
+
+    public List<Event> findEventsByCreator(User creator) {
+        return mockData.findEventsByCreatorId(creator.getId());
     }
 }

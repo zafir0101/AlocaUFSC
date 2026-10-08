@@ -1,79 +1,82 @@
 package alocaufsc.domain.authenticationservices;
 
-import alocaufsc.entrypoint.DTO.AuthResponse;
-import alocaufsc.entrypoint.DTO.CadastroRequest;
-import alocaufsc.entrypoint.DTO.LoginRequest;
-import alocaufsc.entrypoint.DTO.RefreshTokenRequest;
-import alocaufsc.domain.entities.*;
-import alocaufsc.technicalservices.authentication.TokenService;
+import alocaufsc.domain.entities.User;
+import alocaufsc.entrypoint.DTO.*;
+import alocaufsc.entrypoint.DTO.UserDto;
 import alocaufsc.technicalservices.persistence.*;
+import alocaufsc.technicalservices.security.JwtService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
 
-import static alocaufsc.domain.entities.Entity.*;
+import java.util.Optional;
+
+import static alocaufsc.domain.mappers.UserMapper.toEntity;
 
 @Service
 public class AuthService {
+    @Autowired
     private final FacadeDbRest facadeDbRest;
-    private final TokenService tokenService;
 
-    public AuthService(FacadeDbRest facadeDbRest, TokenService tokenService) {
+    @Autowired
+    public PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public JwtService jwtService;
+
+    public AuthService(FacadeDbRest facadeDbRest) {
         this.facadeDbRest = facadeDbRest;
-        this.tokenService = tokenService;
     }
 
-    public AuthResponse cadastrar(CadastroRequest request) {
-        if (facadeDbRest.existsByEmail(request.email())) {
+    public AuthResponse register(UserDto userDto) {
+        if (facadeDbRest.existsByEmail(userDto.email())) {
             throw new IllegalArgumentException("E-mail já cadastrado.");
         }
 
-        String id = UUID.randomUUID().toString();
-        User usuario = switch (request.entity()) {
-            case DISCENTE -> new User(id, request.nomeCompleto(), request.email(), request.senha(), DISCENTE);
-            case DOCENTE -> new User(id, request.nomeCompleto(), request.email(), request.senha(), DOCENTE);
-            case ORGANIZACAO -> new User(id, request.nomeCompleto(), request.email(), request.senha(), ORGANIZACAO);
-            case ADMINISTRADOR -> new User(id, request.nomeCompleto(), request.email(), request.senha(), ADMINISTRADOR);
-        };
+        User user = toEntity(userDto);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        facadeDbRest.save(user);
 
-        facadeDbRest.save(usuario);
-
-        return gerarTokens(usuario);
+        return generateTokens(user);
     }
 
-    public AuthResponse login(LoginRequest request) {
-        User usuario = facadeDbRest.findByEmail(request.email())
+    public AuthResponse login(LoginRequest request) throws IllegalArgumentException {
+        User user = facadeDbRest.findUserByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("Usuário ou senha inválidos."));
 
-        if (!usuario.getSenha().equals(request.senha())) {
-            throw new IllegalArgumentException("Usuário ou senha inválidos.");
-        }
-
-        return gerarTokens(usuario);
+        if (!passwordEncoder.matches(request.password(), user.getPassword()))
+            throw new IllegalArgumentException("Usuário ou senha inválidos");
+        return generateTokens(user);
     }
 
-    public AuthResponse refreshToken(RefreshTokenRequest request) {
-        String email = facadeDbRest.findEmailByRefreshToken(request.refreshToken())
-                .orElseThrow(() -> new IllegalArgumentException("Refresh token inválido ou expirado."));
-
-        User usuario = facadeDbRest.findByEmail(email)
+    public AuthResponse getNewAccessToken(RefreshTokenRequest request) {
+        User user = facadeDbRest.findUserbyRefreshToken(request.refreshToken())
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado."));
 
-        facadeDbRest.deleteRefreshToken(request.refreshToken());
-        return gerarTokens(usuario);
+        String accessToken = jwtService.generateToken(user.getEmail(), false);
+        facadeDbRest.saveAccessToken(accessToken, user.getEmail());
+
+        return new AuthResponse(
+              accessToken,
+              request.refreshToken(),
+              user.getEntity().name(),
+              user.getFullName()
+        );
     }
 
-    private AuthResponse gerarTokens(User usuario) {
-        String accessToken = tokenService.generateAccessToken(usuario.getEmail(), usuario.getTipoPerfil().name());
-        String refreshToken = tokenService.generateRefreshToken(usuario.getEmail());
+    private AuthResponse generateTokens(User user) {
+        String accessToken = jwtService.generateToken(user.getEmail(), false);
+        String refreshToken = jwtService.generateToken(user.getEmail(), true);
 
-        facadeDbRest.saveRefreshToken(refreshToken, usuario.getEmail());
+        facadeDbRest.saveAccessToken(accessToken, user.getEmail());
+        facadeDbRest.saveRefreshToken(refreshToken, user.getEmail());
 
         return new AuthResponse(
                 accessToken,
                 refreshToken,
-                usuario.getTipoPerfil().name(),
-                usuario.getNomeCompleto()
+                user.getEntity().name(),
+                user.getFullName()
         );
     }
 }

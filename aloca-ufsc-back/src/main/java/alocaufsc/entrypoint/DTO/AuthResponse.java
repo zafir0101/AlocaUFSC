@@ -1,8 +1,8 @@
 package alocaufsc.entrypoint.DTO;
 
 public record AuthResponse(
-        String token,
-        String refreshToken,
-        String tipoPerfil,
-        String nomeCompleto
+    String accessToken,
+    String refreshToken,
+    String entity,
+    String fullName
 ) {}

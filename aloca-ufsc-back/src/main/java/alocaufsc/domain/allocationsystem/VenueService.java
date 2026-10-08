@@ -10,8 +10,7 @@ public class VenueService {
     private final FacadeDbRest facadeDbRest;
 
     public VenueService(FacadeDbRest facadeDbRest) {
-        this.facadeDbRest = facadeDbRest;
-    }
+        this.facadeDbRest = facadeDbRest; }
 
     public List<Venue> getAllVenues() {
         return facadeDbRest.findAllVenues();

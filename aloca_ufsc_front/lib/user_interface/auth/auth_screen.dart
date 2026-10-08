@@ -1,11 +1,12 @@
-import 'package:aloca_ufsc_front/api/auth_service.dart';
-import 'package:aloca_ufsc_front/user_interface/auth/auth_model.dart';
-import 'package:aloca_ufsc_front/user_interface/home/home_screen.dart';
-import 'package:aloca_ufsc_front/theme.dart';
-import 'package:aloca_ufsc_front/widgets.dart';
+import '../../models/api_model.dart';
+import '../../models/auth_model.dart';
+import '../../../theme.dart';
+import '../../../widgets.dart';
+import '../../../main.dart';
+import '../../../shell.dart';
+
 import 'package:flutter/material.dart';
 
-import '../allocation/manage_venue/venue_screen.dart';
 
 class AuthScreen extends StatefulWidget {
     const AuthScreen({super.key});
@@ -15,8 +16,6 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-    final AuthService _authService = AuthService();
-
     final _formKey = GlobalKey<FormState>();
     bool _isLogin = true;
     bool _loading = false;
@@ -43,58 +42,60 @@ class _AuthScreenState extends State<AuthScreen> {
         if (!_formKey.currentState!.validate()) return;
 
         setState(() => _loading = true);
+        
+        final Result<void, ApiError> response;
 
-        try {
-            final AuthResponse response;
-
-            if (_isLogin) {
-        final loginReq = LoginRequest(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
+        if (_isLogin) {
+            final loginReq = LoginRequest(
+                email: _emailController.text.trim(),
+                password: _passwordController.text,
         );
-        response = await _authService.login(loginReq);
-      } else {
-        final signUpReq = SignUpRequest(
-          fullName: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          entity: _typeSelected.name.toUpperCase(),
-          id: _idController.text.trim(),
-        );
-        response = await _authService.signUp(signUpReq);
-      }
 
-            if (!mounted) return;
+            response = await appState.login(loginReq);
+        } else {
+            final signUpReq = SignUpRequest(
+               fullName: _nameController.text.trim(),
+               email: _emailController.text.trim(),
+               password: _passwordController.text,
+               entity: _typeSelected.name.toUpperCase(),
+            );
 
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                    content: Text(
-                        _isLogin
-                        ? 'Login realizado com sucesso.'
-                        : 'Cadastro realizado com sucesso.',
-                    ),
+           response = await appState.register(signUpReq);
+          }
+
+        if (response.isError) {
+            if (response.error == ApiError.invalidEmailOrPassword) {
+                if (!mounted) return;
+                showToast(context, "Senha ou Email incorretos");
+                setState(() => _loading = false);
+                return;
+            }
+            if (response.error == ApiError.signUpError) {
+                if (!mounted) return;
+                showToast(context, "Erro ao tentar cadastrar o usuário");
+                setState(() => _loading = false);
+                return;
+            }
+        } 
+        
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    _isLogin
+                    ? 'Login realizado com sucesso.'
+                    : 'Cadastro realizado com sucesso.',
                 ),
-            );
-
-            if (response.entity == 'ADMINISTRADOR') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const VenueScreen()),
+                behavior: SnackBarBehavior.floating,
+                margin: EdgeInsets.all(16),
+            ),
         );
-      } else {
+
+        if (mounted) setState(() => _loading = false);
+
         Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomeScreen()));
-      }
-        } catch (e) {
-            if (!mounted) return;
-
-            final errorMessage = e.toString().replaceFirst('Exception: ', '');
-
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(errorMessage)),
-            );
-        } finally {
-            if (mounted) setState(() => _loading = false);
-        }
+        MaterialPageRoute(builder: (context) => const RootShell()));
     }
 
     @override

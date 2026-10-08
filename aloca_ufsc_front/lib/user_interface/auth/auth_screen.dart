@@ -1,11 +1,11 @@
 import 'package:aloca_ufsc_front/api/auth_service.dart';
-import 'package:aloca_ufsc_front/user_interface/auth/auth_model.dart';
+import 'package:aloca_ufsc_front/models/auth_model.dart';
 import 'package:aloca_ufsc_front/user_interface/home/home_screen.dart';
 import 'package:aloca_ufsc_front/theme.dart';
 import 'package:aloca_ufsc_front/widgets.dart';
 import 'package:flutter/material.dart';
 
-import '../allocation/manage_venue/venue_screen.dart';
+import '../allocation/venue_screen.dart';
 
 class AuthScreen extends StatefulWidget {
     const AuthScreen({super.key});
@@ -45,7 +45,7 @@ class _AuthScreenState extends State<AuthScreen> {
         setState(() => _loading = true);
 
         try {
-            final AuthResponse response;
+            final AuthInfo response;
 
             if (_isLogin) {
         final loginReq = LoginRequest(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../api/venue_service.dart';
-import '../../auth/auth_screen.dart';
-import 'venue_model.dart';
+import '../../models/venue_model.dart';
 import '../../../theme.dart';
 
 class VenueScreen extends StatefulWidget {

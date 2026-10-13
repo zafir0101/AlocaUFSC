@@ -65,6 +65,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
       Session.token = response.token;
       Session.userName = response.name;
+      Session.role = response.entity;
             if (!mounted) return;
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -77,7 +78,6 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
             );
 
-        // Todos os perfis vão para o RootShell (Eventos, Home e Alocações).
         Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const RootShell()),
         );

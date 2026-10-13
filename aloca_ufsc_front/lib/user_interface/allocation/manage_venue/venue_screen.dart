@@ -1,162 +1,90 @@
 import 'package:flutter/material.dart';
+
 import '../../../api/venue_service.dart';
-import '../../auth/auth_screen.dart';
-import 'venue_model.dart';
 import '../../../theme.dart';
+import 'venue_card.dart';
+import 'venue_model.dart';
+
 
 class VenueScreen extends StatefulWidget {
-    const VenueScreen({Key? key}) : super(key: key);
+  const VenueScreen({super.key});
 
-    @override
-    State<VenueScreen> createState() => _VenueScreenState();
+  @override
+  State<VenueScreen> createState() => _VenueScreenState();
 }
 
 class _VenueScreenState extends State<VenueScreen> {
-    final VenueService _venueService = VenueService();
-    late Future<List<Venue>> _venuesFuture;
+  final VenueService _venueService = VenueService();
+  late Future<List<Venue>> _venuesFuture;
 
-    @override
-    void initState() {
-        super.initState();
-        _refreshVenues();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _venuesFuture = _venueService.fetchVenues();
+  }
 
-    void _refreshVenues() {
-        setState(() {
-            _venuesFuture = _venueService.fetchVenues();
-        });
-    }
+  Future<void> _refreshVenues() async {
+    final future = _venueService.fetchVenues();
+    setState(() => _venuesFuture = future);
+    await future.catchError((_) => <Venue>[]);
+  }
 
-    void _openVenueForm({Venue? venue}) {
-        final nameController = TextEditingController(text: venue?.name ?? '');
-        final locationController =
-        TextEditingController(text: venue?.location ?? '');
-        final capacityController =
-        TextEditingController(text: venue?.capacity.toString() ?? '');
-        final descriptionController =
-        TextEditingController(text: venue?.description ?? '');
-
-        showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                title: Text(venue == null ? 'Create Venue' : 'Edit Venue'),
-                content: SingleChildScrollView(
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                            TextField(
-                                controller: nameController,
-                                decoration: const InputDecoration(labelText: 'Nome')),
-                            TextField(
-                                controller: locationController,
-                                decoration: const InputDecoration(labelText: 'Localização')),
-                            TextField(
-                                controller: capacityController,
-                                decoration: const InputDecoration(labelText: 'Capacidade'),
-                                keyboardType: TextInputType.number,
-                            ),
-                            TextField(
-                                controller: descriptionController,
-                                decoration: const InputDecoration(labelText: 'Descrição')),
-                        ],
-                    ),
-                ),
-                actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancelar')),
-                    ElevatedButton(
-                        onPressed: () async {
-                            final newVenue = Venue(
-                                id: venue?.id,
-                                name: nameController.text,
-                                location: locationController.text,
-                                capacity: int.tryParse(capacityController.text) ?? 0,
-                                description: descriptionController.text,
-                            );
-
-                            if (venue == null) {
-                await _venueService.createVenue(newVenue);
-              } else {
-                await _venueService.updateVenue(venue.id!, newVenue);
-              }
-
-                            if (mounted) Navigator.pop(context);
-                            _refreshVenues();
-                        },
-                        child: const Text('Salvar'),
-                    ),
-                ],
-            ),
-        );
-    }
-
-    @override
-    Widget build(BuildContext context) {
-        return Scaffold(
-            backgroundColor: AppColors.background,
-            appBar: AppBar(
-                title: const Text(
-                    'Alocações',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.mainBlue,
-                    ),
-                ),
-            ),
-            body: FutureBuilder<List<Venue>>(
-                future: _venuesFuture,
-                builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text(
+          'Alocações',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: AppColors.mainBlue),
+        ),
+      ),
+      body: FutureBuilder<List<Venue>>(
+        future: _venuesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Sem espaços cadastrados'));
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(snapshot.error.toString().replaceFirst('Exception: ', ''), textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: _refreshVenues,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tentar novamente'),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
-                    final venues = snapshot.data!;
-                    return ListView.builder(
-                        itemCount: venues.length,
-                        itemBuilder: (context, index) {
-                            final item = venues[index];
-                            return Card(
-                                margin:
-                                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                                child: ListTile(
-                                    title: Text(item.name,
-                                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle:
-                                    Text('${item.location} | Capacity: ${item.capacity}'),
-                                    trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                            IconButton(
-                                                icon: const Icon(Icons.edit, color: Colors.blue),
-                                                onPressed: () => _openVenueForm(venue: item),
-                                            ),
-                                            IconButton(
-                                                icon: const Icon(Icons.delete, color: Colors.red),
-                                                onPressed: () async {
-                                                    if (item.id != null) {
-                            await _venueService.deleteVenue(item.id!);
-                            _refreshVenues();
-                          }
-                                                },
-                                            ),
-                                        ],
-                                    ),
-                                ),
-                            );
-                        },
-                    );
-                },
+          final venues = snapshot.data ?? [];
+          if (venues.isEmpty) {
+            return const Center(child: Text('Nenhum espaço cadastrado.'));
+          }
+
+          return RefreshIndicator(
+            onRefresh: _refreshVenues,
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + MediaQuery.paddingOf(context).bottom),
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Text('Espaços físicos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                ),
+                for (final venue in venues) VenueCard(venue: venue),
+              ],
             ),
-            // floatingActionButton: FloatingActionButton(
-            //     onPressed: () => _openVenueForm(),
-            //     child: const Icon(Icons.add),
-            // ),
-        );
-    }
+          );
+        },
+      ),
+    );
+  }
 }

@@ -66,7 +66,6 @@ class _EventScreenState extends State<EventScreen> {
 
   void _logout(BuildContext context) {
     Session.clear();
-    // rootNavigator: sai do RootShell inteiro, não só da aba.
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const AuthScreen()),
           (route) => false,
@@ -179,7 +178,6 @@ class _EventScreenState extends State<EventScreen> {
     return RefreshIndicator(
       onRefresh: _loadEvents,
       child: ListView(
-        // O RootShell desenha a barra de navegação por cima do conteúdo (extendBody).
         padding: EdgeInsets.fromLTRB(16, 8, 16, 8 + MediaQuery.paddingOf(context).bottom),
         children: [
           for (final event in events)
@@ -268,13 +266,18 @@ class _EventCard extends StatelessWidget {
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
-                    EventBadge(event: event),
+                    EventBadges(event: event),
                   ],
                 ),
                 const SizedBox(height: 8),
                 _InfoRow(icon: Icons.calendar_today, text: formatPeriod(event.start, event.end)),
                 const SizedBox(height: 4),
-                _InfoRow(icon: Icons.place_outlined, text: event.venueName ?? 'Local a definir'),
+                _InfoRow(
+                  icon: Icons.place_outlined,
+                  text: event.allocationStatus == AllocationStatus.allocated
+                      ? (event.venueName ?? 'Espaço alocado')
+                      : 'Local a definir',
+                ),
                 if (event.description.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(

@@ -135,16 +135,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
                 ),
               ),
-              EventBadge(event: _event),
+              EventBadges(event: _event),
             ],
           ),
           const SizedBox(height: 24),
           _DetailItem(icon: Icons.calendar_today, label: 'Período', value: formatPeriod(_event.start, _event.end)),
-          _DetailItem(
-            icon: Icons.place_outlined,
-            label: 'Local',
-            value: _event.venueName ?? 'A definir (será definido na alocação de espaço)',
-          ),
+          _DetailItem(icon: Icons.place_outlined, label: 'Local', value: _venueText()),
+          if (_event.showsAllocationReminder && _event.allocationStatus != AllocationStatus.allocated)
+            _VenueNotice(pending: _event.allocationStatus == AllocationStatus.pending),
           if (_event.creatorName != null)
             _DetailItem(icon: Icons.person_outline, label: 'Organizador', value: _event.creatorName!),
           _DetailItem(
@@ -161,6 +159,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
       ),
     );
+  }
+
+  String _venueText() {
+    if (_event.allocationStatus == AllocationStatus.allocated) {
+      // TODO(alocação): com várias alocações, mostrar a lista de espaços e horários em vez de um nome só.
+      return _event.venueName ?? 'Espaço alocado';
+    }
+    return 'Local a definir';
   }
 
   Widget _buildFinishedNotice() {
@@ -263,10 +269,45 @@ class _DetailItem extends StatelessWidget {
   }
 }
 
-class EventBadge extends StatelessWidget {
+class _VenueNotice extends StatelessWidget {
+  final bool pending;
+
+  const _VenueNotice({required this.pending});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = pending ? Colors.blueGrey : Colors.purple;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.shade50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: color.shade700),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(pending
+                ? 'O espaço deste evento ainda não foi confirmado pelo administrador.'
+                : 'Este evento ainda não tem espaço. Solicite um espaço na aba Alocações.'),
+          ),
+          // TODO(alocação): botão "Solicitar espaço" (sem espaço) ou "Ver solicitação" (pendente),
+          // abrindo a tela de alocação já com este evento selecionado.
+        ],
+      ),
+    );
+  }
+}
+
+// Etiqueta do evento (no máximo uma), no canto do card e dos detalhes:
+// situação ("Cancelado" vermelho, "Suspenso" amarelo, "Em andamento" verde) ou, para evento que ainda
+// não começou, o espaço ("Sem espaço" roxo, "Espaço a confirmar" cinza-azulado).
+class EventBadges extends StatelessWidget {
   final Event event;
 
-  const EventBadge({super.key, required this.event});
+  const EventBadges({super.key, required this.event});
 
   @override
   Widget build(BuildContext context) {
@@ -278,6 +319,12 @@ class EventBadge extends StatelessWidget {
     }
     if (event.isInProgress) {
       return _Badge(label: 'Em andamento', background: Colors.green.shade50, foreground: Colors.green.shade700);
+    }
+    if (event.showsAllocationReminder && event.allocationStatus == AllocationStatus.none) {
+      return _Badge(label: 'Sem espaço', background: Colors.purple.shade50, foreground: Colors.purple.shade700);
+    }
+    if (event.showsAllocationReminder && event.allocationStatus == AllocationStatus.pending) {
+      return _Badge(label: 'Espaço a confirmar', background: Colors.blueGrey.shade50, foreground: Colors.blueGrey.shade700);
     }
     return const SizedBox.shrink();
   }

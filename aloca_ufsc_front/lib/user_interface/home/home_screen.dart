@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../auth/auth_screen.dart';
 import '../../theme.dart';
+import '../notification/notification_bell.dart';
 
 class HomeScreen extends StatelessWidget {
     const HomeScreen({super.key});
@@ -35,10 +36,15 @@ class HomeScreen extends StatelessWidget {
                                 ),
                             ]
                         ),
-                        IconButton(
-                            onPressed: () => (),
-                            icon: const Icon(Icons.settings, size: 24, color: AppColors.mainBlue,),
-                            alignment: AlignmentGeometry.topRight,
+                        Row(
+                            children: [
+                                const NotificationBell(),
+                                IconButton(
+                                    onPressed: () => (),
+                                    icon: const Icon(Icons.settings, size: 24, color: AppColors.mainBlue,),
+                                    alignment: AlignmentGeometry.topRight,
+                                ),
+                            ],
                         ),
                     ]   
                 ),

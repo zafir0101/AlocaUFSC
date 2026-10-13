@@ -1,5 +1,8 @@
 enum EventStatus { active, suspended, cancelled }
 
+// Situação do evento em relação aos espaços físicos (vem do backend, calculada pelas alocações).
+enum AllocationStatus { none, pending, allocated }
+
 class Event {
   final int? id;
   final String title;
@@ -9,6 +12,7 @@ class Event {
   final EventStatus status;
   final String? venueName;
   final String? creatorName;
+  final AllocationStatus allocationStatus;
 
   Event({
     this.id,
@@ -19,6 +23,7 @@ class Event {
     this.status = EventStatus.active,
     this.venueName,
     this.creatorName,
+    this.allocationStatus = AllocationStatus.none,
   });
 
   bool get isCancelled => status == EventStatus.cancelled;
@@ -40,6 +45,10 @@ class Event {
 
   bool get canReactivate => isSuspended && !hasEnded;
 
+  // O lembrete de espaço ("Sem espaço" / "Espaço a confirmar") só aparece em evento ativo que ainda não começou.
+  // Em andamento, o evento mostra só "Em andamento" (a pessoa pode ter decidido não usar espaço).
+  bool get showsAllocationReminder => status == EventStatus.active && start.isAfter(DateTime.now());
+
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
       id: json['id'],
@@ -54,6 +63,11 @@ class Event {
       },
       venueName: json['venueName'],
       creatorName: json['creatorName'],
+      allocationStatus: switch (json['allocationStatus']) {
+        'AGUARDANDO_APROVACAO' => AllocationStatus.pending,
+        'ALOCADO' => AllocationStatus.allocated,
+        _ => AllocationStatus.none,
+      },
     );
   }
 

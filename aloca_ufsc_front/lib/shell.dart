@@ -1,5 +1,7 @@
+import "package:aloca_ufsc_front/user_interface/admin/admin_screen.dart";
 import "package:aloca_ufsc_front/user_interface/allocation/manage_venue/venue_screen.dart";
 import "package:flutter/material.dart";
+import "api/session.dart";
 import "user_interface/home/home_screen.dart";
 import "user_interface/event/event_screen.dart";
 
@@ -50,10 +52,12 @@ class RootShellState extends State<RootShell> {
                     onGenerateRoute: (_) => MaterialPageRoute(
                         builder: (_) => ValueListenableBuilder<int>(
                             valueListenable: _tab,
-                            builder: (_, index, __) => const [
-                                EventScreen(),
-                                HomeScreen(),
-                                VenueScreen(),
+                            builder: (_, index, __) => [
+                                const EventScreen(),
+                                const HomeScreen(),
+                                const VenueScreen(),
+                                // Aba extra só para o administrador: área de administração.
+                                if (Session.isAdmin) const AdminScreen(),
                             ][index]
                         ),
                     ),
@@ -87,6 +91,8 @@ class FloatingNavBar extends StatelessWidget {
                            _item(0, Icons.event_note_outlined, Icons.event_note_rounded, 'Eventos', context),
                            _item(1, Icons.home_outlined, Icons.home_rounded, 'Home', context),
                            _item(2, Icons.meeting_room_outlined, Icons.meeting_room, 'Alocações', context),
+                           if (Session.isAdmin)
+                               _item(3, Icons.admin_panel_settings_outlined, Icons.admin_panel_settings, 'Admin', context),
                         ]
                     )
                 )
@@ -103,7 +109,7 @@ class FloatingNavBar extends StatelessWidget {
                 child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOut,
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    margin: EdgeInsets.symmetric(horizontal: Session.isAdmin ? 6 : 16, vertical: 4),
                     decoration: BoxDecoration(
                         color: selected ? AppColors.mainBlue : AppColors.background,
                         borderRadius: BorderRadius.circular(100),

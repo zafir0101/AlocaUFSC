@@ -3,6 +3,7 @@ package alocaufsc.technicalservices.persistence;
 import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.Event;
+import alocaufsc.domain.notificationsystem.Notification;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -78,5 +79,37 @@ public class FacadeDbRest {
 
     public List<Event> findEventsByCreator(User creator) {
         return mockData.findEventsByCreatorId(creator.getId());
+    }
+
+    public Optional<Venue> findVenue(String id) {
+        return mockData.findById(id);
+    }
+
+    public List<User> findAllUsers() {
+        return mockData.findAllUsers();
+    }
+
+    public Notification saveNotification(Notification notification) {
+        if (notification.getId() == null) {
+            notification.setId(mockData.nextNotificationId());
+        }
+        mockData.save(notification);
+        return notification;
+    }
+
+    public Optional<Notification> findNotification(Long id) {
+        return mockData.findNotificationById(id);
+    }
+
+    public List<Notification> findNotificationsByRecipient(User recipient) {
+        return mockData.findNotificationsByRecipientId(recipient.getId());
+    }
+
+    public void deleteNotification(Long id) {
+        mockData.deleteNotificationById(id);
+    }
+
+    public List<Event> findAllEvents() {
+        return mockData.findAllEvents();
     }
 }

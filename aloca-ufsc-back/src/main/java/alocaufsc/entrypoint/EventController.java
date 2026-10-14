@@ -1,18 +1,16 @@
 package alocaufsc.entrypoint;
 
-import alocaufsc.domain.authenticationservices.AuthService;
 import alocaufsc.domain.Period;
 import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.DuplicateEventException;
+import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.domain.eventsystem.EventService;
 import alocaufsc.domain.eventsystem.InfoEvent;
 import alocaufsc.entrypoint.DTO.EventRequest;
 import alocaufsc.entrypoint.DTO.EventResponse;
-import alocaufsc.technicalservices.persistence.FacadeDbRest;
-import alocaufsc.technicalservices.security.JwtService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,70 +22,56 @@ import java.util.NoSuchElementException;
 @RequestMapping("/api/events")
 @CrossOrigin(origins = "*")
 public class EventController {
-    @Autowired
-    private EventService eventService;
 
-    @Autowired
-    private FacadeDbRest facadeDbRest;
+    private final EventService eventService;
 
-    @Autowired
-    private JwtService jwtService;
+    // Injeção de dependência via construtor (Melhor prática do Spring)
+    public EventController(EventService eventService) {
+        this.eventService = eventService;
+    }
 
     @GetMapping("/me")
-    public List<EventResponse> getMyEvents(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        return facadeDbRest.findUserbyAccessToken(jwtService.getTokenFromBody(authorization))
-                .map(user -> eventService.getEventsByCreator(user).stream().map(EventResponse::from).toList() )
-                .orElse(null);
+    public List<EventResponse> getMyEvents(@AuthenticationPrincipal User user) {
+        return eventService.getEventsByCreator(user).stream()
+                .map(event -> EventResponse.from(event, eventService.getAllocationStatus(event)))
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public EventResponse getEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-        @PathVariable Long id) {
-        return facadeDbRest.findUserbyAccessToken(jwtService.getTokenFromBody(authorization))
-                .map(user -> EventResponse.from(eventService.getEvent(user, id)) )
-                .orElse(null);
+    public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.getEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
     @PostMapping
-    public ResponseEntity<EventResponse> createEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-        @RequestBody EventRequest request) {
-        EventResponse response = facadeDbRest.findUserbyAccessToken(jwtService.getTokenFromBody(authorization))
-                .map(user -> EventResponse.from(eventService.createEvent(user, toInfoEvent(request))))
-                .orElse(null);
+    public ResponseEntity<EventResponse> createEvent(@AuthenticationPrincipal User user, @RequestBody EventRequest request) {
+        Event event = eventService.createEvent(user, toInfoEvent(request));
+        EventResponse response = EventResponse.from(event, eventService.getAllocationStatus(event));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public EventResponse editEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-        @PathVariable Long id,
-        @RequestBody EventRequest request) {
-        return facadeDbRest.findUserbyAccessToken(jwtService.getTokenFromBody(authorization))
-                .map(user -> EventResponse.from(eventService.editEvent(user, id, toInfoEvent(request))))
-                .orElse(null);
+    public EventResponse editEvent(@AuthenticationPrincipal User user, @PathVariable Long id, @RequestBody EventRequest request) {
+        Event event = eventService.editEvent(user, id, toInfoEvent(request));
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
     @PatchMapping("/{id}/cancel")
-    public EventResponse cancelEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-        @PathVariable Long id) {
-        return facadeDbRest.findUserbyAccessToken(jwtService.getTokenFromBody(authorization))
-                .map(user -> EventResponse.from(eventService.cancelEvent(user, id)))
-                .orElse(null);
+    public EventResponse cancelEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.cancelEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
     @PatchMapping("/{id}/suspend")
-    public EventResponse suspendEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-        @PathVariable Long id) {
-        return facadeDbRest.findUserbyAccessToken(jwtService.getTokenFromBody(authorization))
-                .map(user -> EventResponse.from(eventService.suspendEvent(user, id)))
-                .orElse(null);
+    public EventResponse suspendEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.suspendEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
     @PatchMapping("/{id}/reactivate")
-    public EventResponse reactivateEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-        @PathVariable Long id) {
-        return facadeDbRest.findUserbyAccessToken(jwtService.getTokenFromBody(authorization))
-                .map(user -> EventResponse.from(eventService.reactivateEvent(user, id)))
-                .orElse(null);
+    public EventResponse reactivateEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.reactivateEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
     private InfoEvent toInfoEvent(EventRequest request) {
@@ -105,7 +89,7 @@ public class EventController {
     @ExceptionHandler(DuplicateEventException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicate(DuplicateEventException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-        .body(Map.of("mensagem", e.getMessage(), "eventoId", e.getExistingEvent().getId()));
+                .body(Map.of("mensagem", e.getMessage(), "eventoId", e.getExistingEvent().getId()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

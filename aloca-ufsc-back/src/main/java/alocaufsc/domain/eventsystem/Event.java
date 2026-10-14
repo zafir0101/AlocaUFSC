@@ -1,7 +1,7 @@
 package alocaufsc.domain.eventsystem;
 
-import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.Period;
+import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
 
 public class Event {

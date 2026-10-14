@@ -1,173 +1,198 @@
 import 'package:flutter/material.dart';
-import '../../models/venue_model.dart';
+
+import '../../../models/venue_model.dart';
+import '../../../models/api_model.dart';
 import '../../../theme.dart';
-import '../../../main.dart';
-import '../../../widgets.dart';
-import '../../models/api_model.dart';
+import '../../../main.dart'; 
 
 class VenueScreen extends StatefulWidget {
-    const VenueScreen({super.key});
+  const VenueScreen({super.key});
 
-    @override
-    State<VenueScreen> createState() => _VenueScreenState();
+  @override
+  State<VenueScreen> createState() => _VenueScreenState();
 }
 
 class _VenueScreenState extends State<VenueScreen> {
-    late ApiRequest<List<Venue>> _venuesFuture;
+  late ApiRequest<List<Venue>> _venuesFuture;
 
-    @override
-    void initState() {
-        super.initState();
-        _venuesFuture = appState.fetchVenues();
-    }
+  @override
+  void initState() {
+    super.initState();
+    _venuesFuture = appState.fetchVenues();
+  }
 
-    Future<bool> _refreshVenues() async {
-        final result = await appState.fetchVenues();
-        setState(() {
-            _venuesFuture = Future.value(result);
-        });
+  Future<void> _refreshVenues() async {
+    final future = appState.fetchVenues();
+    setState(() {
+      _venuesFuture = future;
+    });
+    await future;
+  }
 
-        return (result.isOk);
-    }
+  Widget _buildErrorState(String errorMessage) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              errorMessage.replaceFirst('Exception: ', ''),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _refreshVenues,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    void _openVenueForm({Venue? venue}) {
-        final nameController = TextEditingController(text: venue?.name ?? '');
-        final locationController =
-        TextEditingController(text: venue?.location ?? '');
-        final capacityController =
-        TextEditingController(text: venue?.capacity.toString() ?? '');
-        final descriptionController =
-        TextEditingController(text: venue?.description ?? '');
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text(
+          'Alocações',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: AppColors.mainBlue,
+          ),
+        ),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Text(
+              'Espaços físicos',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ),
+          
+          Expanded(
+            child: FutureBuilder(
+              future: _venuesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-        showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                title: Text(venue == null ? 'Create Venue' : 'Edit Venue'),
-                content: SingleChildScrollView(
-                    child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                if (snapshot.hasError) {
+                  return _buildErrorState(snapshot.error.toString());
+                }
+
+                final result = snapshot.data!;
+
+                if (result.isError) {
+                  return _buildErrorState(result.error.toString());
+                }
+
+                final venues = result.data ?? [];
+
+                if (venues.isEmpty) {
+                  return const Center(child: Text('Nenhum espaço cadastrado.'));
+                }
+
+                return RefreshIndicator(
+                  onRefresh: _refreshVenues,
+                  child: ListView.separated(
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 80 + MediaQuery.paddingOf(context).bottom),
+                    itemCount: venues.length,
+                    separatorBuilder: (context, index) => const Divider(height: 32, color: Colors.transparent),
+                    itemBuilder: (context, index) {
+                      final item = venues[index];
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                            TextField(
-                                controller: nameController,
-                                decoration: const InputDecoration(labelText: 'Nome')),
-                            TextField(
-                                controller: locationController,
-                                decoration: const InputDecoration(labelText: 'Localização')),
-                            TextField(
-                                controller: capacityController,
-                                decoration: const InputDecoration(labelText: 'Capacidade'),
-                                keyboardType: TextInputType.number,
+                          Text(
+                            item.code ?? 'SEM-COD',
+                            style: const TextStyle(
+                              color: AppColors.mainBlue,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
                             ),
-                            TextField(
-                                controller: descriptionController,
-                                decoration: const InputDecoration(labelText: 'Descrição')),
+                          ),
+                          const SizedBox(height: 2),
+                          
+                          Text(
+                            item.name,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          _InfoRow(
+                            icon: Icons.location_on_outlined,
+                            text: item.location,
+                          ),
+                          _InfoRow(
+                            icon: Icons.people_outline,
+                            text: '${item.capacity} pessoas',
+                          ),
+                          _InfoRow(
+                            icon: Icons.verified_user_outlined,
+                            // OBS: Ajuste para como as permissões são chamadas no seu VenueModel
+                            text: item.allowedRoles?.join(', ') ?? 'Permissões não definidas',
+                          ),
                         ],
-                    ),
-                ),
-                actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancelar')),
-                    ElevatedButton(
-                        onPressed: () async {
-                            final newVenue = Venue(
-                                id: venue?.id,
-                                name: nameController.text,
-                                location: locationController.text,
-                                capacity: int.tryParse(capacityController.text) ?? 0,
-                                description: descriptionController.text,
-                            );
-
-                            if (venue == null) {
-                                appState.createVenue(newVenue).then((result) {
-                                if (result.isError && context.mounted) showToast(context, "Não foi possível criar o Espaço");
-                                });
-                         } else {
-                                appState.updateVenue(venue.id!, newVenue).then((result) {
-                                if (result.isError && context.mounted) showToast(context, "Não foi possível atualizar o Espaço");
-                                });
-                         }
-
-                            if (mounted) Navigator.pop(context);
-                            _refreshVenues().then((hasLoad) {
-                                if (!hasLoad && context.mounted) showToast(context, "Não foi possível carregar os Espaços");
-                            });
-                        },
-                        child: const Text('Salvar'),
-                    ),
-                ],
+                      );
+                    },
+                  ),
+                );
+              },
             ),
-        );
-    }
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-    @override
-    Widget build(BuildContext context) {
-        return Scaffold(
-            backgroundColor: AppColors.background,
-            appBar: AppBar(
-                title: const Text(
-                    'Alocações',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.mainBlue,
-                    ),
-                ),
-            ),
-            body: FutureBuilder(
-                future: _venuesFuture,
-                builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.data!.isEmpty) {
-            return const Center(child: Text('Sem espaços cadastrados'));
-          }
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
-                    final venues = snapshot.data!.data!;
-                    return ListView.builder(
-                        itemCount: venues.length,
-                        itemBuilder: (context, index) {
-                            final item = venues[index];
-                            return Card(
-                                margin:
-                                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
-                                child: ListTile(
-                                    title: Text(item.name,
-                                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    subtitle:
-                                    Text('${item.location} | Capacity: ${item.capacity}'),
-                                    trailing: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                            IconButton(
-                                                icon: const Icon(Icons.edit, color: Colors.blue),
-                                                onPressed: () => _openVenueForm(venue: item),
-                                            ),
-                                            IconButton(
-                                                icon: const Icon(Icons.delete, color: Colors.red),
-                                                onPressed: () async {
-                                                    if (item.id != null) {
-                            appState.deleteVenue(item.id!).then((result) {
-                                if (result.isError && context.mounted) showToast(context, "Não foi possível deletar o Espaço");
-                            });
-                            _refreshVenues();
-                          }
-                                                },
-                                            ),
-                                        ],
-                                    ),
-                                ),
-                            );
-                        },
-                    );
-                },
+  const _InfoRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade500),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 14,
+              ),
             ),
-            // floatingActionButton: FloatingActionButton(
-            //     onPressed: () => _openVenueForm(),
-            //     child: const Icon(Icons.add),
-            // ),
-        );
-    }
+          ),
+        ],
+      ),
+    );
+  }
 }

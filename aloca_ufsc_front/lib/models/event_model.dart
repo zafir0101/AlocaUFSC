@@ -1,5 +1,7 @@
 enum EventStatus { active, suspended, cancelled }
 
+enum AllocationStatus { none, pending, allocated }
+
 class Event {
   final int? id;
   final String title;
@@ -9,6 +11,7 @@ class Event {
   final EventStatus status;
   final String? venueName;
   final String? creatorName;
+  final AllocationStatus allocationStatus;
 
   Event({
     this.id,
@@ -19,6 +22,7 @@ class Event {
     this.status = EventStatus.active,
     this.venueName,
     this.creatorName,
+    this.allocationStatus = AllocationStatus.none,
   });
 
   bool get isCancelled => status == EventStatus.cancelled;
@@ -40,6 +44,8 @@ class Event {
 
   bool get canReactivate => isSuspended && !hasEnded;
 
+  bool get showsAllocationReminder => status == EventStatus.active && start.isAfter(DateTime.now());
+
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
       id: json['id'],
@@ -54,6 +60,11 @@ class Event {
       },
       venueName: json['venueName'],
       creatorName: json['creatorName'],
+      allocationStatus: switch (json['allocationStatus']) {
+        'AGUARDANDO_APROVACAO' => AllocationStatus.pending,
+        'ALOCADO' => AllocationStatus.allocated,
+        _ => AllocationStatus.none,
+      },
     );
   }
 

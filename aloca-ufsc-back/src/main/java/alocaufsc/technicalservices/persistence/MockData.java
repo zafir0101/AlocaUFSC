@@ -6,6 +6,8 @@ import alocaufsc.domain.Period;
 import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.domain.eventsystem.EventStatus;
+import alocaufsc.domain.notificationsystem.Notification;
+import alocaufsc.domain.notificationsystem.NotificationType;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -23,8 +25,11 @@ public class MockData {
     private final Map<String, Venue> venues = new ConcurrentHashMap<>();
     private final Map<Long, Event> events = new ConcurrentHashMap<>();
     private final AtomicLong eventIdSequence = new AtomicLong();
+    private final Map<Long, Notification> notifications = new ConcurrentHashMap<>();
+    private final AtomicLong notificationIdSequence = new AtomicLong();
 
     public MockData() {
+        seed(); // Popula o banco falso ao iniciar a aplicação
     }
 
     public void save(User user) {
@@ -35,12 +40,20 @@ public class MockData {
         venues.put(venue.getId(), venue);
     }
 
-    public void saveEvent(Event event) {
+    public void save(Event event) {
         events.put(event.getId(), event);
+    }
+
+    public void save(Notification notification) {
+        notifications.put(notification.getId(), notification);
     }
 
     public Optional<User> findByEmail(String email) {
         return Optional.ofNullable(usersByEmail.get(email.toLowerCase()));
+    }
+
+    public List<User> findAllUsers() {
+        return new ArrayList<>(usersByEmail.values());
     }
 
     public boolean existsByEmail(String email) {
@@ -53,6 +66,10 @@ public class MockData {
 
     public Optional<String> getEmailByRefreshToken(String token) {
         return Optional.ofNullable(refreshTokens.get(token));
+    }
+
+    public void removeRefreshToken(String token) {
+        refreshTokens.remove(token);
     }
 
     public void saveAccessToken(String token, String email) {
@@ -89,17 +106,71 @@ public class MockData {
                 .toList();
     }
 
-    // maria@ufsc.br / 123456 -> tem eventos | joao@ufsc.br / 123456 -> sem eventos
-    /*
+    public Long nextNotificationId() {
+        return notificationIdSequence.incrementAndGet();
+    }
+
+    public void deleteNotificationById(Long id) {
+        notifications.remove(id);
+    }
+
+    public List<Event> findAllEvents() {
+        return new ArrayList<>(events.values());
+    }
+
+    public Optional<Notification> findNotificationById(Long id) {
+        return Optional.ofNullable(notifications.get(id));
+    }
+
+    public List<Notification> findNotificationsByRecipientId(String recipientId) {
+        return notifications.values().stream()
+                .filter(n -> n.getRecipient().getId().equals(recipientId))
+                .toList();
+    }
+
+    // maria@ufsc.br -> professor with events | joao@ufsc.br -> student without events | admin@ufsc.br -> manager
     private void seed() {
+        User maria = new User(UUID.randomUUID().toString(), "Maria Silva", "maria@ufsc.br", "123456", Entity.PROFESSOR, "USER");
+        User joao = new User(UUID.randomUUID().toString(), "João Souza", "joao@ufsc.br", "123456", Entity.STUDENT, "USER");
+        User admin = new User(UUID.randomUUID().toString(), "Admin", "admin@ufsc.br", "123456", Entity.MANAGER, "ADMIN");
+        save(maria);
+        save(joao);
+        save(admin);
+
+        seedVenue("CTC", "Block A - CTC Management", "AUD-01", "CTC Auditorium", 250,
+                "Auditorium with projector, sound system, and stage.", Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("CTC", "INE - Informatics and Statistics", "LAB-01", "Computer Lab 1", 40,
+                "40 computers with Linux and a projector.", Entity.PROFESSOR);
+
+        seedVenue("CTC", "INE - Informatics and Statistics", "LAB-02", "Computer Lab 2", 30,
+                "30 computers with Windows.", Entity.PROFESSOR);
+
+        seedVenue("CTC", "INE - Informatics and Statistics", "ROOM-205", "INE Meeting Room", 12,
+                "Meeting table and TV for presentations.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("CTC", "EFI - Integrated Physical Space", "ROOM-101", "Room 101", 50,
+                "Classroom with whiteboard and projector.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("CDS", "Gymnasium 1", "GYM-01", "Sports Gymnasium", 300,
+                "Multi-sport court with bleachers.", Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("OTHER", "University Library (BU)", "ESP-01", "BU Lounge Area", 80,
+                "Open space for exhibitions and fairs.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
+
         LocalDate today = LocalDate.now();
         LocalDateTime currentHour = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS);
+
         seedEvent(maria, "Oficina de Design de Interfaces",
                 "Oficina prática de prototipação de telas.",
                 new Period(currentHour.minusHours(1), currentHour.plusHours(2)), EventStatus.ATIVO);
         seedEvent(maria, "Palestra: Introdução ao Flutter",
                 "Palestra introdutória sobre desenvolvimento mobile com Flutter.",
-                new Period(today.plusDays(3).atTime(19, 0), today.plusDays(3).atTime(21, 0)), EventStatus.ATIVO);
+                new Period(today.plusDays(2).atTime(19, 0), today.plusDays(2).atTime(21, 0)), EventStatus.ATIVO);
+        // Começa em ~20 horas: gera o lembrete de 24 horas sem espaço.
+        seedEvent(maria, "Reunião de Planejamento da Semana Acadêmica",
+                "Reunião com a comissão organizadora.",
+                new Period(currentHour.plusHours(20), currentHour.plusHours(22)), EventStatus.ATIVO);
         seedEvent(maria, "Semana Acadêmica de Computação",
                 "Uma semana de palestras, minicursos e competições.",
                 new Period(today.plusDays(10).atTime(9, 0), today.plusDays(14).atTime(18, 0)), EventStatus.ATIVO);
@@ -124,10 +195,24 @@ public class MockData {
         seedEvent(maria, "Visita Técnica ao Sapiens Parque",
                 "Visita guiada às empresas do parque tecnológico.",
                 new Period(today.plusDays(25).atTime(8, 0), today.plusDays(25).atTime(12, 0)), EventStatus.CANCELADO);
+
+        seedNotification(maria, NotificationType.NOVO_ESPACO, "Novo espaço disponível: Auditório do CTC (CTC - Bloco A - Direção do CTC).",
+                null, LocalDateTime.now().minusDays(1), true);
     }
 
-    private void seedEvent(User creator, String title, String description, Period period, EventStatus status) {
-        save(new Event(nextEventId(), title, description, period, status, null, creator));
+    private void seedVenue(String center, String building, String code, String name, int capacity, String description,
+                           Entity... allowedRoles) {
+        save(new Venue(UUID.randomUUID().toString(), code, name, center, building, capacity, description, Set.of(allowedRoles)));
     }
-    */
+
+    private void seedNotification(User recipient, NotificationType type, String message, Long eventId,
+                                  LocalDateTime createdAt, boolean read) {
+        save(new Notification(nextNotificationId(), recipient, type, message, eventId, createdAt, read));
+    }
+
+    private Event seedEvent(User creator, String title, String description, Period period, EventStatus status) {
+        Event event = new Event(nextEventId(), title, description, period, status, null, creator);
+        save(event);
+        return event;
+    }
 }

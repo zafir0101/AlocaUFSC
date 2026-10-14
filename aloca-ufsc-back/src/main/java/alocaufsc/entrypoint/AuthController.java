@@ -1,27 +1,23 @@
 package alocaufsc.entrypoint;
 
-import alocaufsc.domain.entities.User;
 import alocaufsc.entrypoint.DTO.*;
 import alocaufsc.domain.authenticationservices.AuthService;
-import alocaufsc.technicalservices.persistence.FacadeDbRest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
-    @Autowired
-    private AuthService authService;
 
-    @Autowired
-    private FacadeDbRest facadeDbRest;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody UserDto request) {

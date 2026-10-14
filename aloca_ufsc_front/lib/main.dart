@@ -1,61 +1,62 @@
-import 'package:aloca_ufsc_front/models/api_model.dart';
 import 'package:flutter/material.dart';
 
 import 'theme.dart';
 import 'shell.dart';
-import 'state.dart';
 import 'user_interface/auth/auth_screen.dart';
-import 'user_interface/home/home_screen.dart';
+import 'state.dart';
+import 'models/api_model.dart';
 
 final appState = AppState();
 
 void main() {
-    runApp(const AlocaUFSC());
+  runApp(const AlocaUfscApp());
 }
 
-class AlocaUFSC extends StatefulWidget {
-    const AlocaUFSC({super.key});
+class AlocaUfscApp extends StatefulWidget {
+  const AlocaUfscApp({super.key});
 
-    @override
-      State<StatefulWidget> createState() => _AlocaUFSCState();
+  @override
+  State<AlocaUfscApp> createState() => _AlocaUfscAppState();
 }
 
-class _AlocaUFSCState extends State<AlocaUFSC> {
-    late ApiRequest<void> _loginValidation;
-    
-    void initState() {
-        super.initState();
-        _loginValidation = appState.rememberMe();
-    }
+class _AlocaUfscAppState extends State<AlocaUfscApp> {
+  late ApiRequest<void> _loginValidation;
 
-    @override
-    Widget build(BuildContext context) {
-        return MaterialApp(
-            title: 'Aloca UFSC',
-            debugShowCheckedModeBanner: false,
-            theme: buildTheme(),
-            home: ListenableBuilder(
-                listenable: appState.isLoggedIn,
-                builder: (context, child) {
-                    return Container(
-                        color: AppColors.background,
-                        child: FutureBuilder(
-                            future: _loginValidation,
-                            builder: (_, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.waiting) {
-                                  return const Center(child: CircularProgressIndicator());
-                                } else if (snapshot.connectionState == ConnectionState.done &&
-                                    (snapshot.hasError || snapshot.data!.isError)) {
-                                        return AuthScreen();
-                                    }
-                                return RootShell();
-                            }
-                        )
-                    );
-                }
-            )
-        );
-    }
+  @override
+  void initState() {
+    super.initState();
+    _loginValidation = appState.rememberMe();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'AlocaUFSC',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primaryColor: AppColors.mainBlue,
+        scaffoldBackgroundColor: AppColors.background,
+      ),
+      home: ListenableBuilder(
+        listenable: appState.isLoggedIn,
+        builder: (context, child) {
+          return Container(
+            color: AppColors.background,
+            child: FutureBuilder(
+              future: _loginValidation,
+              builder: (_, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.connectionState == ConnectionState.done &&
+                    (snapshot.hasError || (snapshot.data?.isError ?? false))) { return const AuthScreen(); }
+                return const RootShell();
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
-
-

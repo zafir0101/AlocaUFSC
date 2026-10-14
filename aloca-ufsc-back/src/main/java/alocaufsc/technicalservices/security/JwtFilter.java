@@ -1,6 +1,8 @@
 package alocaufsc.technicalservices.security;
 
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,21 +38,31 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         String jwtToken = authHeader.substring(7);
-        String email = jwtService.extractSubject(jwtToken);
+        String email = null;
 
-        if (email != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+        try {
+            email = jwtService.extractSubject(jwtToken);
+        } catch (ExpiredJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"mensagem\": \"Token expirado\"}");
+            return;
+        } catch (JwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"mensagem\": \"Token inválido\"}");
+            return;
+        }
 
+        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             facadeDb.findUserByEmail(email).ifPresent(user -> {
-                if (jwtService.isTokenValid(jwtToken)) {
-                    ArrayList<GrantedAuthority> role = new ArrayList<>();
-                    role.add(new SimpleGrantedAuthority(user.getRole()));
+                ArrayList<GrantedAuthority> role = new ArrayList<>();
+                role.add(new SimpleGrantedAuthority(user.getRole()));
 
-                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                            new UsernamePasswordAuthenticationToken(user, null, role);
-                    usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                }
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
+                        new UsernamePasswordAuthenticationToken(user, null, role);
+                usernamePasswordAuthenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             });
         }
         filterChain.doFilter(request, response);

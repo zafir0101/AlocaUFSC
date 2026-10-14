@@ -98,8 +98,7 @@ public class AllocationService {
             allocation.setRejectionReason(null);
             allocation.updateData(venue, newData.start(), newData.end());
             if (wasApproved) {
-                // o espaço anterior foi liberado: o evento volta a aguardar local
-                allocation.getEvent().setStatus(EventStatus.AGUARDANDO_LOCAL);
+                allocation.getEvent().setStatus(EventStatus.ATIVO);
                 facadeDb.saveEvent(allocation.getEvent());
             }
         }
@@ -150,7 +149,7 @@ public class AllocationService {
         Allocation saved = facadeDb.saveAllocation(allocation);
 
         Event event = saved.getEvent();
-        event.setStatus(EventStatus.ALOCADO);
+        event.setStatus(EventStatus.ATIVO);
         facadeDb.saveEvent(event);
 
         notifyRequester(saved, NotificationType.ALOCACAO_APROVADA,
@@ -232,7 +231,7 @@ public class AllocationService {
     }
 
     private void notifyRequester(Allocation allocation, NotificationType type, String message) {
-        facadeDb.saveNotification(new Notification(null, allocation.getRequeste(), type, message,
+        facadeDb.saveNotification(new Notification(null, allocation.getRequester(), type, message,
                 allocation.getEvent().getId(), LocalDateTime.now(), false));
     }
 

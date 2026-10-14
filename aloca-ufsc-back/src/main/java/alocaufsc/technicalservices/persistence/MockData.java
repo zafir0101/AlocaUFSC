@@ -1,5 +1,7 @@
 package alocaufsc.technicalservices.persistence;
 
+import alocaufsc.domain.allocationsystem.Allocation;
+import alocaufsc.domain.allocationsystem.AllocationStatus;
 import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.Entity;
 import alocaufsc.domain.Period;
@@ -27,6 +29,8 @@ public class MockData {
     private final AtomicLong eventIdSequence = new AtomicLong();
     private final Map<Long, Notification> notifications = new ConcurrentHashMap<>();
     private final AtomicLong notificationIdSequence = new AtomicLong();
+    private final Map<Long, Allocation> allocations = new ConcurrentHashMap<>();
+    private final AtomicLong allocationIdSequence = new AtomicLong();
 
     public MockData() {
         seed(); // Popula o banco falso ao iniciar a aplicação
@@ -46,6 +50,10 @@ public class MockData {
 
     public void save(Notification notification) {
         notifications.put(notification.getId(), notification);
+    }
+
+    public void save(Allocation allocation) {
+        allocations.put(allocation.getId(), allocation);
     }
 
     public Optional<User> findByEmail(String email) {
@@ -128,6 +136,42 @@ public class MockData {
                 .toList();
     }
 
+
+    public Long nextAllocationId() {
+        return allocationIdSequence.incrementAndGet();
+    }
+
+    public Optional<Allocation> findAllocationById(Long id) {
+        return Optional.ofNullable(allocations.get(id));
+    }
+
+    public List<Allocation> findAllocationsByStatus(AllocationStatus status) {
+        return allocations.values().stream().filter(a -> a.getStatus() == status).toList();
+    }
+
+    public List<Allocation> findAllocationsByRequesterId(String requesterId) {
+        return allocations.values().stream()
+                .filter(a -> a.getRequester().getId().equals(requesterId))
+                .toList();
+    }
+
+    public List<Allocation> findAllocationsByEventId(Long eventId) {
+        return allocations.values().stream()
+                .filter(a -> a.getEvent().getId().equals(eventId))
+                .toList();
+    }
+
+    /** Somente alocações APPROVED bloqueiam o espaço. */
+    public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, Long ignoreAllocationId) {
+        return venues.values().stream()
+                .filter(v -> allocations.values().stream().noneMatch(a ->
+                        a.getStatus() == AllocationStatus.APPROVED
+                                && a.getVenue().getId().equals(v.getId())
+                                && !a.getId().equals(ignoreAllocationId)
+                                && a.overlaps(start, end)))
+                .toList();
+    }
+
     // maria@ufsc.br -> professor with events | joao@ufsc.br -> student without events | admin@ufsc.br -> manager
     private void seed() {
         User maria = new User(UUID.randomUUID().toString(), "Maria Silva", "maria@ufsc.br", "123456", Entity.PROFESSOR, "USER");
@@ -137,7 +181,7 @@ public class MockData {
         save(joao);
         save(admin);
 
-        seedVenue("CTC", "Block A - CTC Management", "AUD-01", "CTC Auditorium", 250,
+        Venue auditorium = seedVenue("CTC", "Block A - CTC Management", "AUD-01", "CTC Auditorium", 250,
                 "Auditorium with projector, sound system, and stage.", Entity.PROFESSOR, Entity.ORGANIZATION);
 
         seedVenue("CTC", "INE - Informatics and Statistics", "LAB-01", "Computer Lab 1", 40,
@@ -152,7 +196,7 @@ public class MockData {
         seedVenue("CTC", "EFI - Integrated Physical Space", "ROOM-101", "Room 101", 50,
                 "Classroom with whiteboard and projector.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
 
-        seedVenue("CDS", "Gymnasium 1", "GYM-01", "Sports Gymnasium", 300,
+        Venue gym = seedVenue("CDS", "Gymnasium 1", "GYM-01", "Sports Gymnasium", 300,
                 "Multi-sport court with bleachers.", Entity.PROFESSOR, Entity.ORGANIZATION);
 
         seedVenue("OTHER", "University Library (BU)", "ESP-01", "BU Lounge Area", 80,
@@ -164,14 +208,14 @@ public class MockData {
         seedEvent(maria, "Oficina de Design de Interfaces",
                 "Oficina prática de prototipação de telas.",
                 new Period(currentHour.minusHours(1), currentHour.plusHours(2)), EventStatus.ATIVO);
-        seedEvent(maria, "Palestra: Introdução ao Flutter",
+        Event flutterTalk = seedEvent(maria, "Palestra: Introdução ao Flutter",
                 "Palestra introdutória sobre desenvolvimento mobile com Flutter.",
                 new Period(today.plusDays(2).atTime(19, 0), today.plusDays(2).atTime(21, 0)), EventStatus.ATIVO);
         // Começa em ~20 horas: gera o lembrete de 24 horas sem espaço.
         seedEvent(maria, "Reunião de Planejamento da Semana Acadêmica",
                 "Reunião com a comissão organizadora.",
                 new Period(currentHour.plusHours(20), currentHour.plusHours(22)), EventStatus.ATIVO);
-        seedEvent(maria, "Semana Acadêmica de Computação",
+        Event academicWeek = seedEvent(maria, "Semana Acadêmica de Computação",
                 "Uma semana de palestras, minicursos e competições.",
                 new Period(today.plusDays(10).atTime(9, 0), today.plusDays(14).atTime(18, 0)), EventStatus.ATIVO);
         seedEvent(maria, "Workshop de Spring Boot",
@@ -196,13 +240,30 @@ public class MockData {
                 "Visita guiada às empresas do parque tecnológico.",
                 new Period(today.plusDays(25).atTime(8, 0), today.plusDays(25).atTime(12, 0)), EventStatus.CANCELADO);
 
+        // UC1/UC2: um pedido PENDING (aparece na fila do admin) e um APPROVED (bloqueia o ginásio no período).
+        seedAllocation(auditorium, flutterTalk, maria,
+                today.plusDays(2).atTime(19, 0), today.plusDays(2).atTime(21, 0), AllocationStatus.PENDING);
+        seedAllocation(gym, academicWeek, maria,
+                today.plusDays(10).atTime(9, 0), today.plusDays(14).atTime(18, 0), AllocationStatus.APPROVED);
+        academicWeek.setStatus(EventStatus.ATIVO);
+
         seedNotification(maria, NotificationType.NOVO_ESPACO, "Novo espaço disponível: Auditório do CTC (CTC - Bloco A - Direção do CTC).",
                 null, LocalDateTime.now().minusDays(1), true);
     }
 
-    private void seedVenue(String center, String building, String code, String name, int capacity, String description,
-                           Entity... allowedRoles) {
-        save(new Venue(UUID.randomUUID().toString(), code, name, center, building, capacity, description, Set.of(allowedRoles)));
+    private Venue seedVenue(String center, String building, String code, String name, int capacity, String description,
+                            Entity... allowedRoles) {
+        Venue venue = new Venue(UUID.randomUUID().toString(), code, name, center, building, capacity, description, Set.of(allowedRoles));
+        save(venue);
+        return venue;
+    }
+
+    private Allocation seedAllocation(Venue venue, Event event, User requester, LocalDateTime start, LocalDateTime end,
+                                      AllocationStatus status) {
+        Allocation allocation = new Allocation(nextAllocationId(), venue, event, requester, start, end, status,
+                LocalDateTime.now().minusHours(3));
+        save(allocation);
+        return allocation;
     }
 
     private void seedNotification(User recipient, NotificationType type, String message, Long eventId,

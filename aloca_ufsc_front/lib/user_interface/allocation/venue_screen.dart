@@ -4,6 +4,7 @@ import '../../../models/venue_model.dart';
 import '../../../models/api_model.dart';
 import '../../../theme.dart';
 import '../../../main.dart'; 
+import 'allocation_form_screen.dart'; // ✅ Importe a tela do formulário aqui
 
 class VenueScreen extends StatefulWidget {
   const VenueScreen({super.key});
@@ -74,14 +75,6 @@ class _VenueScreenState extends State<VenueScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            child: Text(
-              'Espaços físicos',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey.shade700,
-              ),
-            ),
           ),
           
           Expanded(
@@ -117,43 +110,57 @@ class _VenueScreenState extends State<VenueScreen> {
                     itemBuilder: (context, index) {
                       final item = venues[index];
                       
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.code ?? 'SEM-COD',
-                            style: const TextStyle(
-                              color: AppColors.mainBlue,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
+                      // ✅ Envolvemos o card do espaço num InkWell para permitir o toque
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () {
+                          // ✅ Navega para a tela de formulário passando a Venue
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => AllocationFormScreen(venue: item),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                          
-                          Text(
-                            item.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.code ?? 'SEM-COD',
+                                style: const TextStyle(
+                                  color: AppColors.mainBlue,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              
+                              Text(
+                                item.name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
 
-                          _InfoRow(
-                            icon: Icons.location_on_outlined,
-                            text: item.location,
+                              _InfoRow(
+                                icon: Icons.location_on_outlined,
+                                text: item.location,
+                              ),
+                              _InfoRow(
+                                icon: Icons.people_outline,
+                                text: '${item.capacity} pessoas',
+                              ),
+                              _InfoRow(
+                                icon: Icons.verified_user_outlined,
+                                text: item.allowedRoles?.join(', ') ?? 'Permissões não definidas',
+                              ),
+                            ],
                           ),
-                          _InfoRow(
-                            icon: Icons.people_outline,
-                            text: '${item.capacity} pessoas',
-                          ),
-                          _InfoRow(
-                            icon: Icons.verified_user_outlined,
-                            // OBS: Ajuste para como as permissões são chamadas no seu VenueModel
-                            text: item.allowedRoles?.join(', ') ?? 'Permissões não definidas',
-                          ),
-                        ],
+                        ),
                       );
                     },
                   ),

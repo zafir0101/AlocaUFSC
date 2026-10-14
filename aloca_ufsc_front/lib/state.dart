@@ -1,17 +1,18 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api/venue_service.dart' as venueService;
 import 'api/event_service.dart' as eventService;
 import 'api/auth_service.dart' as authService;
 import 'api/notification_service.dart' as notificationService;
+import 'api/allocation_service.dart' as allocationService;
 
 import 'models/api_model.dart';
 import 'models/event_model.dart';
 import 'models/auth_model.dart';
 import 'models/venue_model.dart';
 import 'models/notification_model.dart';
+import 'models/allocation_model.dart'; 
 
 
 typedef AccessToken = String;
@@ -70,9 +71,9 @@ class AppState {
     final token = await secureStorage.readRefreshToken();
     if (token == null) return Result.error(ApiError.invalidSession);
 
-    final request = await authService.refreshToken(token);
+    final request = await authService.getNewAccessToken(token);
     if (request.isError) {
-      if (request.error == ApiError.invalidSession) _isLoggedIn.value = false;
+      logout();
       return request;
     }
 
@@ -91,10 +92,11 @@ class AppState {
     if (result.error == ApiError.expiredAccessToken && retry) {
       final request = await _requestAuthInfo();
       if (request.isError) return Result.error(request.error!);
-      
       _updateAuthInfo(request.data!);
       return func(accessToken!);
     }
+
+    if (result.error == ApiError.invalidSession || result.error == ApiError.expiredAccessToken) { logout(); }
 
     return result;
   }
@@ -103,7 +105,7 @@ class AppState {
     refreshToken = await secureStorage.readRefreshToken();
     
     if (refreshToken != null) {
-      final result = await authService.refreshToken(refreshToken!);
+      final result = await authService.getNewAccessToken(refreshToken!);
       if (result.isError) return Result.error(result.error!);
 
       _updateAuthInfo(result.data!);
@@ -111,6 +113,7 @@ class AppState {
       return Result.ok(null);
     }
 
+    logout();
     return Result.error(ApiError.invalidSession);
   }
 
@@ -131,7 +134,7 @@ class AppState {
     _isLoggedIn.value = true;
     return Result.ok(null);
   }
-
+  
   ApiRequest<List<Venue>> fetchVenues() async {
     return _withAccessToken((accessToken) => venueService.fetchVenues(accessToken));
   }
@@ -151,7 +154,7 @@ class AppState {
   ApiRequest<void> deleteVenue(String id) async {
     return _withAccessToken((accessToken) => venueService.deleteVenue(id, accessToken));
   }
-
+  
   ApiRequest<List<Event>> fetchMyEvents() async {
     return _withAccessToken((accessToken) => eventService.fetchMyEvents(accessToken));
   }
@@ -179,7 +182,7 @@ class AppState {
   ApiRequest<Event> reactivateEvent(int id) async {
     return _withAccessToken((accessToken) => eventService.reactivateEvent(id, accessToken));
   }
-
+  
   ApiRequest<int> fetchUnreadCount() async {
     return _withAccessToken((accessToken) => notificationService.fetchUnreadCount(accessToken));
   }
@@ -202,5 +205,25 @@ class AppState {
 
   ApiRequest<void> deleteReadNotifications() async {
     return _withAccessToken((accessToken) => notificationService.deleteRead(accessToken));
+  }
+
+  ApiRequest<List<EventOption>> fetchEligibleEvents() async {
+    return _withAccessToken((accessToken) => allocationService.fetchEligibleEvents(accessToken));
+  }
+
+  ApiRequest<Allocation> createAllocation(int eventId, String venueId, DateTime start, DateTime end) async {
+    return _withAccessToken((accessToken) => allocationService.createAllocation(eventId, venueId, start, end, accessToken));
+  }
+
+  ApiRequest<List<Allocation>> fetchAllocationsByStatus(String status) async {
+    return _withAccessToken((accessToken) => allocationService.fetchAllocationsByStatus(status, accessToken));
+  }
+
+  ApiRequest<Allocation> approveAllocation(int id) async {
+    return _withAccessToken((accessToken) => allocationService.approveAllocation(id, accessToken));
+  }
+
+  ApiRequest<Allocation> rejectAllocation(int id, String reason) async {
+    return _withAccessToken((accessToken) => allocationService.rejectAllocation(id, reason, accessToken));
   }
 }

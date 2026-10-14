@@ -29,8 +29,9 @@ public class VenueService {
         this.notificationService = notificationService;
     }
 
-    public List<Venue> getAllVenues() {
+    public List<Venue> getAllVenues(User currentUser) {
         return facadeDbRest.findAllVenues().stream()
+                .filter(venue -> currentUser.getEntity() == Entity.MANAGER || venue.allows(currentUser.getEntity()))
                 .sorted(Comparator.comparing(Venue::getCenter)
                         .thenComparing(Venue::getBuilding, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(Venue::getName, String.CASE_INSENSITIVE_ORDER))

@@ -1,6 +1,8 @@
 package alocaufsc.domain.eventsystem;
 
 import alocaufsc.domain.Period;
+import alocaufsc.domain.allocationsystem.Allocation;
+import alocaufsc.domain.allocationsystem.AllocationStatus;
 import alocaufsc.domain.entities.User;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.stereotype.Service;
@@ -108,14 +110,15 @@ public class EventService {
         return facadeDbRest.saveEvent(event);
     }
 
-    // TODO(alocação): ponto de integração com as alocações. Quando a classe Allocation existir, trocar o
-    // corpo por algo como:
-    //   List<Allocation> allocations = facadeDbRest.findAllocationsByEvent(event);
-    //   if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.APROVADA)) return ALOCADO;
-    //   if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.PENDENTE)) return AGUARDANDO_APROVACAO;
-    //   return SEM_ESPACO;
-    // O app já mostra as etiquetas "Sem espaço" e "Aguardando aprovação" a partir deste valor.
     public EventAllocationStatus getAllocationStatus(Event event) {
+        List<Allocation> allocations = facadeDbRest.findAllocationsByEvent(event.getId());
+
+        if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.APPROVED)) {
+            return EventAllocationStatus.ALOCADO;
+        }
+        if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.PENDING)) {
+            return EventAllocationStatus.AGUARDANDO_APROVACAO;
+        }
         return EventAllocationStatus.SEM_ESPACO;
     }
 

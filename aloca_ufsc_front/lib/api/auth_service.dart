@@ -34,7 +34,7 @@ ApiRequest<AuthInfo> register(SignUpRequest request) async {
     return Result.ok(AuthInfo.fromJson(jsonDecode(response.body)));
 }
 
-ApiRequest<AuthInfo> refreshToken(String token) async {
+ApiRequest<AuthInfo> getNewAccessToken(String token) async {
     final requestBody = {'refreshToken': token};
 
     final response = await http.post(

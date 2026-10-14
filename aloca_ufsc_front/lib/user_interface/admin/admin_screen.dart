@@ -1,3 +1,4 @@
+import 'package:aloca_ufsc_front/user_interface/admin/admin_allocation_tab.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme.dart';
@@ -30,8 +31,7 @@ class AdminScreen extends StatelessWidget {
         body: const TabBarView(
           children: [
             VenueAdminScreen(),
-            // TODO(alocação): trocar pela tela de aprovação de solicitações de alocação.
-            _AllocationRequestsPlaceholder(),
+            AdminAllocationsTab(),
           ],
         ),
       ),
@@ -39,22 +39,3 @@ class AdminScreen extends StatelessWidget {
   }
 }
 
-class _AllocationRequestsPlaceholder extends StatelessWidget {
-  const _AllocationRequestsPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.fact_check_outlined, size: 64, color: AppColors.textSecondary),
-          SizedBox(height: 12),
-          Text('Nenhuma solicitação', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          SizedBox(height: 4),
-          Text('As solicitações de alocação aparecerão aqui.', style: TextStyle(color: AppColors.textSecondary)),
-        ],
-      ),
-    );
-  }
-}

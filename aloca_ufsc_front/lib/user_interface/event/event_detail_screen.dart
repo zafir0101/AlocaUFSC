@@ -313,19 +313,46 @@ class EventBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (event.isCancelled) {
-      return _Badge(label: 'Cancelado', background: Colors.red.shade50, foreground: Colors.red.shade700);
+      return _Badge(
+        label: 'Cancelado',
+        background: Colors.red.shade50,
+        foreground: Colors.red.shade700,
+      );
     }
     if (event.isSuspended) {
-      return _Badge(label: 'Suspenso', background: Colors.amber.shade50, foreground: Colors.amber.shade900);
+      return _Badge(
+        label: 'Suspenso',
+        background: Colors.orange.shade50,
+        foreground: Colors.orange.shade800,
+      );
     }
     if (event.isInProgress) {
-      return _Badge(label: 'Em andamento', background: Colors.green.shade50, foreground: Colors.green.shade700);
+      return _Badge(
+        label: 'Em andamento',
+        background: Colors.teal.shade50,
+        foreground: Colors.teal.shade700,
+      );
+    }
+    if (event.allocationStatus == AllocationStatus.allocated) {
+      return _Badge(
+        label: 'Ativo',
+        background: Colors.green.shade50,
+        foreground: Colors.green.shade700,
+      );
+    }
+    if (event.allocationStatus == AllocationStatus.pending) {
+      return _Badge(
+        label: 'Espaço a confirmar',
+        background: Colors.indigo.shade50,
+        foreground: Colors.indigo.shade700,
+      );
     }
     if (event.showsAllocationReminder && event.allocationStatus == AllocationStatus.none) {
-      return _Badge(label: 'Sem espaço', background: Colors.purple.shade50, foreground: Colors.purple.shade700);
-    }
-    if (event.showsAllocationReminder && event.allocationStatus == AllocationStatus.pending) {
-      return _Badge(label: 'Espaço a confirmar', background: Colors.blueGrey.shade50, foreground: Colors.blueGrey.shade700);
+      return _Badge(
+        label: 'Sem espaço',
+        background: Colors.purple.shade50,
+        foreground: Colors.purple.shade700,
+      );
     }
     return const SizedBox.shrink();
   }

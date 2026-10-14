@@ -148,7 +148,7 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
     });
   }
 
-  Future<void> _save() async {
+Future<void> _save() async {
     final fieldsValid = _formKey.currentState!.validate();
     final rolesValid = _roles.isNotEmpty;
     setState(() => _rolesError = rolesValid ? null : 'Selecione pelo menos um perfil.');
@@ -161,21 +161,33 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
       building: _buildingController.text.trim(),
       code: _codeController.text.trim(),
       name: _nameController.text.trim(),
-      // 4. CORREÇÃO: Usando tryParse. O parse() causaria crash se a string viesse vazia.
-      capacity: int.tryParse(_capacityController.text.trim()) ?? 0, 
+      capacity: int.tryParse(_capacityController.text.trim()) ?? 0,
       description: _descriptionController.text.trim(),
       allowedRoles: venueRoleLabels.keys.where(_roles.contains).toList(),
     );
 
     try {
-      final saved = _isEditing
+      final result = _isEditing
           ? await appState.updateVenue(widget.venue!.id!, venue)
           : await appState.createVenue(venue);
+          
       if (!mounted) return;
+
+      // 1. Verifica se houve falha de sessão
+      if (result.isError) {
+         throw Exception("Sessão inválida. Tente fazer login novamente.");
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_isEditing ? 'Espaço atualizado.' : 'Espaço cadastrado.')),
       );
-      Navigator.of(context).pop(saved);
+
+      // 2. Avisa ao PopScope que pode libertar a tela
+      setState(() => _forcePop = true); 
+      
+      // 3. Fecha a tela passando os dados salvos
+      Navigator.of(context).pop(result.data); 
+      
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -5,6 +5,7 @@ import alocaufsc.entrypoint.DTO.*;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import alocaufsc.technicalservices.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.server.authentication.InvalidateLeastUsedServerMaximumSessionsExceededHandler;
 import org.springframework.stereotype.Service;
 
 import static alocaufsc.domain.mappers.UserMapper.toEntity;
@@ -45,7 +46,10 @@ public class AuthService {
         return generateTokens(user);
     }
 
-    public AuthResponse getNewAccessToken(RefreshTokenRequest request) {
+    public AuthResponse getNewAccessToken(RefreshTokenRequest request) throws IllegalArgumentException {
+        if (request.refreshToken().isBlank() || !jwtService.isTokenValid(request.refreshToken()))
+            throw new IllegalArgumentException("Refresh Token Expirado");
+
         User user = facadeDbRest.findUserbyRefreshToken(request.refreshToken())
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado ou refresh token inválido."));
 

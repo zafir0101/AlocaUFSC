@@ -87,10 +87,6 @@ class _AuthScreenState extends State<AuthScreen> {
     );
 
     if (mounted) setState(() => _loading = false);
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const RootShell()),
-    );
   }
 
   @override

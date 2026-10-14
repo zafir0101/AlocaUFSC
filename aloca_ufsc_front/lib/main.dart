@@ -37,26 +37,30 @@ class _AlocaUfscAppState extends State<AlocaUfscApp> {
         primaryColor: AppColors.mainBlue,
         scaffoldBackgroundColor: AppColors.background,
       ),
-      home: ListenableBuilder(
-        listenable: appState.isLoggedIn,
-        builder: (context, child) {
-          return Container(
-            color: AppColors.background,
-            child: FutureBuilder(
-              future: _loginValidation,
-              builder: (_, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+            home: ListenableBuilder(
+                listenable: appState.isLoggedIn,
+                builder: (context, child) {
+                    return Container(
+                        color: AppColors.background,
+                        child: FutureBuilder(
+                            future: _loginValidation,
+                            builder: (_, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Scaffold(
                     body: Center(child: CircularProgressIndicator()),
                   );
-                } else if (snapshot.connectionState == ConnectionState.done &&
-                    (snapshot.hasError || (snapshot.data?.isError ?? false))) { return const AuthScreen(); }
-                return const RootShell();
-              },
+                }
+
+                if (appState.isLoggedIn.value) {
+                  return const RootShell();
+                } else {
+                  return const AuthScreen();
+                }
+                            },
+                        ),
+                    );
+                },
             ),
-          );
-        },
-      ),
-    );
-  }
+        );
+    }
 }

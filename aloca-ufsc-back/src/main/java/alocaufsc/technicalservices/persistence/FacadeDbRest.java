@@ -1,11 +1,14 @@
 package alocaufsc.technicalservices.persistence;
 
+import alocaufsc.domain.allocationsystem.Allocation;
+import alocaufsc.domain.allocationsystem.AllocationStatus;
 import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.domain.notificationsystem.Notification;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Repository
@@ -109,5 +112,33 @@ public class FacadeDbRest {
 
     public List<Event> findAllEvents() {
         return mockData.findAllEvents();
+    }
+
+    public Allocation saveAllocation(Allocation allocation) {
+        if (allocation.getId() == null) {
+            allocation.setId(mockData.nextAllocationId());
+        }
+        mockData.save(allocation);
+        return allocation;
+    }
+
+    public Optional<Allocation> findAllocation(Long id) {
+        return mockData.findAllocationById(id);
+    }
+
+    public List<Allocation> findAllocationsByStatus(AllocationStatus status) {
+        return mockData.findAllocationsByStatus(status);
+    }
+
+    public List<Allocation> findAllocationsByRequester(User requester) {
+        return mockData.findAllocationsByRequesterId(requester.getId());
+    }
+
+    public List<Allocation> findAllocationsByEvent(Long eventId) {
+        return mockData.findAllocationsByEventId(eventId);
+    }
+
+    public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, Long ignoreAllocationId) {
+        return mockData.findAvailableVenues(start, end, ignoreAllocationId);
     }
 }

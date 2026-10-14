@@ -26,8 +26,8 @@ public class VenueController {
     }
 
     @GetMapping
-    public List<VenueResponse> getAllVenues() {
-        return venueService.getAllVenues().stream().map(VenueResponse::from).toList();
+    public List<VenueResponse> getAllVenues(@AuthenticationPrincipal User user) {
+        return venueService.getAllVenues(user).stream().map(VenueResponse::from).toList();
     }
 
     @GetMapping("/campus")
@@ -41,7 +41,7 @@ public class VenueController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<VenueResponse> createVenue(@AuthenticationPrincipal User admin,
                                                      @RequestBody VenueRequest request) {
         VenueResponse response = VenueResponse.from(venueService.createVenue(admin, toVenueInfo(request)));
@@ -49,7 +49,7 @@ public class VenueController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public VenueResponse updateVenue(@AuthenticationPrincipal User admin,
                                      @PathVariable String id,
                                      @RequestBody VenueRequest request) {
@@ -57,7 +57,7 @@ public class VenueController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteVenue(@AuthenticationPrincipal User admin,
                                             @PathVariable String id) {
         venueService.deleteVenue(admin, id);

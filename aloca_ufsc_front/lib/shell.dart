@@ -80,20 +80,24 @@ class FloatingNavBar extends StatelessWidget {
     Widget build(BuildContext context) {
         final bottomInset = MediaQuery.of(context).viewPadding.bottom; 
         return Padding(
-            padding: EdgeInsets.fromLTRB(0, 0, 0, (bottomInset > 0) ? bottomInset : 0),
+            padding: EdgeInsets.fromLTRB(20, 0, 20, (bottomInset > 0) ? bottomInset + 4 : 18),
             child: Container(
-                color: AppColors.background,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    color: AppColors.background,
+                ),
                 child: SizedBox(
                     height: 70,
                     child: Row(
                         children: [
-                           _item(0, Icons.event_note_outlined, Icons.event_note_rounded, 'Eventos', context),
-                           _item(1, Icons.home_outlined, Icons.home_rounded, 'Home', context),
-                           _item(2, Icons.meeting_room_outlined, Icons.meeting_room, 'Alocações', context),
-                           if (appState.isAdmin)
-                               _item(3, Icons.admin_panel_settings_outlined, Icons.admin_panel_settings, 'Admin', context),
+                            _item(0, Icons.event_note_outlined, Icons.event_note_rounded, 'Eventos', context),
+                            _item(1, Icons.home_outlined, Icons.home_rounded, 'Home', context),
+                            _item(2, Icons.meeting_room_outlined, Icons.meeting_room, 'Alocações', context),
+                            if (appState.isAdmin)
+                            _item(3, Icons.admin_panel_settings_outlined, Icons.admin_panel_settings, 'Admin', context),
                         ]
                     )
+
                 )
             )
         );

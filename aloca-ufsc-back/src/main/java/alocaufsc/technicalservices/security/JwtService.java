@@ -21,7 +21,7 @@ public class JwtService {
     private String secretKey = "";
 
     private static final int REFRESH_TOKEN_EXP_TIME = 518000000;
-    private static final int ACCESS_TOKEN_EXP_TIME = 6000000;
+    private static final int ACCESS_TOKEN_EXP_TIME = 600000;
     private static final String BEARER_PREFIX = "Bearer ";
 
     public JwtService() throws NoSuchAlgorithmException {

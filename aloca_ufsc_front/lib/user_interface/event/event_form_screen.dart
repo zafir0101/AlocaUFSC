@@ -5,7 +5,8 @@ import '../../api/event_service.dart';
 import '../../theme.dart';
 import '../../widgets.dart';
 import 'event_detail_screen.dart';
-import 'event_model.dart';
+import '../../models/event_model.dart';
+import '../../main.dart';
 
 class EventFormScreen extends StatefulWidget {
   final Event? event;
@@ -17,7 +18,6 @@ class EventFormScreen extends StatefulWidget {
 }
 
 class _EventFormScreenState extends State<EventFormScreen> {
-  final EventService _eventService = EventService();
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _titleController;
@@ -157,28 +157,48 @@ class _EventFormScreenState extends State<EventFormScreen> {
       end: _end!,
     );
 
-    try {
-      var saved = _isEditing
-          ? await _eventService.updateEvent(widget.event!.id!, event)
-          : await _eventService.createEvent(event);
-      if (reactivate) {
-        saved = await _eventService.reactivateEvent(saved.id!);
+    var result = _isEditing
+        ? await appState.updateEvent(widget.event!.id!, event)
+        : await appState.createEvent(event);
+
+    if (result.isError) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      // Checa se o erro retornado é do tipo DuplicateEventError configurado no event_service
+      if (result.error is DuplicateEventError) {
+        await _showDuplicateDialog(result.error as DuplicateEventError);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.error.toString().replaceFirst('Exception: ', ''))),
+        );
       }
-      if (!mounted) return;
-      final message = reactivate ? 'Evento atualizado e reativado.' : (_isEditing ? 'Evento atualizado.' : 'Evento criado.');
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      Navigator.of(context).pop(saved);
-    } on DuplicateEventException catch (e) {
-      if (!mounted) return;
-      await _showDuplicateDialog(e);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-      );
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      return;
     }
+
+    var saved = result.data!;
+
+    if (reactivate) {
+      final reactivateResult = await appState.reactivateEvent(saved.id!);
+      
+      if (reactivateResult.isError) {
+        if (!mounted) return;
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(reactivateResult.error.toString())),
+        );
+        return;
+      }
+      saved = reactivateResult.data!;
+    }
+
+    if (!mounted) return;
+    
+    final message = reactivate ? 'Evento atualizado e reativado.' : (_isEditing ? 'Evento atualizado.' : 'Evento criado.');
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    
+    setState(() => _loading = false);
+    Navigator.of(context).pop(saved);
   }
 
   Future<void> _confirmExit() async {
@@ -212,7 +232,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     }
   }
 
-  Future<void> _showDuplicateDialog(DuplicateEventException e) async {
+  Future<void> _showDuplicateDialog(DuplicateEventError e) async {
     final openExisting = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -230,20 +250,26 @@ class _EventFormScreenState extends State<EventFormScreen> {
         ],
       ),
     );
+    
     if (openExisting != true || !mounted) return;
 
-    try {
-      final existing = await _eventService.fetchEvent(e.existingEventId);
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => EventDetailScreen(event: existing)),
-      );
-    } catch (error) {
-      if (!mounted) return;
+    setState(() => _loading = true);
+    
+    final result = await appState.fetchEvent(e.existingEventId);
+    
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (result.isError) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))),
+        SnackBar(content: Text(result.error.toString().replaceFirst('Exception: ', ''))),
       );
+      return;
     }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => EventDetailScreen(event: result.data!)),
+    );
   }
 
   @override
@@ -368,3 +394,4 @@ class _DateTimeField extends StatelessWidget {
     );
   }
 }
+

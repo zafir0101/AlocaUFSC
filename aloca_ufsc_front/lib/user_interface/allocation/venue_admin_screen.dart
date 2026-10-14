@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../api/venue_service.dart';
+import 'package:aloca_ufsc_front/main.dart';
 import '../../../theme.dart';
 import 'venue_card.dart';
 import 'venue_form_screen.dart';
-import 'venue_model.dart';
+import '../../../models/venue_model.dart';
 
-// Gestão dos espaços físicos (aba "Espaços" da Administração), navegada em pastas:
-// centros -> prédios do centro -> espaços do prédio.
-// A busca e o filtro de capacidade valem para a pasta atual (na raiz, para todos os espaços).
 class VenueAdminScreen extends StatefulWidget {
-  // Pasta atual: sem centro = raiz; com centro e sem prédio = prédios do centro; com os dois = espaços do prédio.
   final String? centerCode;
   final String? building;
 
@@ -23,7 +19,6 @@ class VenueAdminScreen extends StatefulWidget {
 class _VenueAdminScreenState extends State<VenueAdminScreen> {
   static const List<int> _capacityFilters = [20, 50, 100];
 
-  final VenueService _venueService = VenueService();
   final TextEditingController _searchController = TextEditingController();
 
   List<Venue> _venues = [];
@@ -53,12 +48,29 @@ class _VenueAdminScreenState extends State<VenueAdminScreen> {
       _loading = _venues.isEmpty;
       _error = null;
     });
+    
     try {
-      final results = await Future.wait([_venueService.fetchVenues(), _venueService.fetchCampus()]);
+      // Dispara as duas chamadas simultaneamente
+      final venuesFuture = appState.fetchVenues();
+      final campusFuture = appState.fetchCampus();
+      
+      // Aguarda o resultado das duas
+      final venuesResult = await venuesFuture;
+      final campusResult = await campusFuture;
+      
       if (!mounted) return;
+      
       setState(() {
-        _venues = results[0] as List<Venue>;
-        _campus = results[1] as List<CampusCenter>;
+        // Valida se alguma retornou erro no padrão Result
+        if (venuesResult.isError) {
+          _error = venuesResult.error.toString().replaceFirst('Exception: ', '');
+        } else if (campusResult.isError) {
+          _error = campusResult.error.toString().replaceFirst('Exception: ', '');
+        } else {
+          // Extrai os dados em caso de sucesso
+          _venues = venuesResult.data ?? [];
+          _campus = campusResult.data ?? [];
+        }
         _loading = false;
       });
     } catch (e) {
@@ -136,10 +148,16 @@ class _VenueAdminScreenState extends State<VenueAdminScreen> {
     if (confirmed != true || !mounted) return;
 
     try {
-      await _venueService.deleteVenue(venue.id!);
+      final result = await appState.deleteVenue(venue.id!);
+      
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Espaço excluído.')));
-      _load();
+      
+      if (result.isError) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.error.toString().replaceFirst('Exception: ', ''))));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Espaço excluído.')));
+        _load();
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));

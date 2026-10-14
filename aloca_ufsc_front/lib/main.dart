@@ -1,32 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'theme.dart';
-//import 'user_interface/auth/auth_screen.dart';
-import 'user_interface/splash/splash_screen.dart';
+import 'shell.dart';
+import 'user_interface/auth/auth_screen.dart';
+import 'state.dart';
+import 'models/api_model.dart';
+
+final appState = AppState();
 
 void main() {
-  runApp(const AlocaUFSC());
+  runApp(const AlocaUfscApp());
 }
 
-class AlocaUFSC extends StatelessWidget {
-  const AlocaUFSC({super.key});
+class AlocaUfscApp extends StatefulWidget {
+  const AlocaUfscApp({super.key});
+
+  @override
+  State<AlocaUfscApp> createState() => _AlocaUfscAppState();
+}
+
+class _AlocaUfscAppState extends State<AlocaUfscApp> {
+  late ApiRequest<void> _loginValidation;
+
+  @override
+  void initState() {
+    super.initState();
+    _loginValidation = appState.rememberMe();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      // Começa no login: os eventos precisam saber quem é o usuário. Depois do login vai para o RootShell.
-      home: const SplashScreen(),
-      title: 'Aloca UFSC',
+      title: 'AlocaUFSC',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      locale: const Locale('pt', 'BR'),
-      supportedLocales: const [Locale('pt', 'BR')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
+      theme: ThemeData(
+        primaryColor: AppColors.mainBlue,
+        scaffoldBackgroundColor: AppColors.background,
+      ),
+      home: ListenableBuilder(
+        listenable: appState.isLoggedIn,
+        builder: (context, child) {
+          return Container(
+            color: AppColors.background,
+            child: FutureBuilder(
+              future: _loginValidation,
+              builder: (_, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                } else if (snapshot.connectionState == ConnectionState.done &&
+                    (snapshot.hasError || (snapshot.data?.isError ?? false))) { return const AuthScreen(); }
+                return const RootShell();
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }

@@ -84,7 +84,7 @@ public class VenueService {
     }
 
     private void ensureAdmin(User user) {
-        if (user == null || user.getTipoPerfil() != Entity.ADMINISTRADOR) {
+        if (user == null || user.getEntity() != Entity.MANAGER) {
             throw new SecurityException("Apenas administradores podem gerenciar espaços físicos.");
         }
     }

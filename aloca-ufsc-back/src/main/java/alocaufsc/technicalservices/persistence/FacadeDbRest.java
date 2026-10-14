@@ -29,42 +29,6 @@ public class FacadeDbRest {
         return venue;
     }
 
-    public List<Venue> findAllVenues() {
-        return mockData.findAllVenues();
-    }
-
-    public Optional<User> findByEmail(String email) {
-        return mockData.findByEmail(email);
-    }
-
-    public boolean existsByEmail(String email) {
-        return mockData.existsByEmail(email);
-    }
-
-    public void saveRefreshToken(String refreshToken, String email) {
-        mockData.saveRefreshToken(refreshToken, email);
-    }
-
-    public Optional<String> findEmailByRefreshToken(String refreshToken) {
-        return mockData.getEmailByRefreshToken(refreshToken);
-    }
-
-    public void deleteRefreshToken(String refreshToken) {
-        mockData.removeRefreshToken(refreshToken);
-    }
-
-    public void deleteVenueById(String id) {
-        mockData.deleteVenueById(id);
-    }
-
-    public void saveAccessToken(String accessToken, String email) {
-        mockData.saveAccessToken(accessToken, email);
-    }
-
-    public Optional<String> findEmailByAccessToken(String accessToken) {
-        return mockData.getEmailByAccessToken(accessToken);
-    }
-
     public Event saveEvent(Event event) {
         if (event.getId() == null) {
             event.setId(mockData.nextEventId());
@@ -73,6 +37,43 @@ public class FacadeDbRest {
         return event;
     }
 
+    public void saveRefreshToken(String refreshToken, String email) {
+        mockData.saveRefreshToken(refreshToken, email);
+    }
+
+    public void saveAccessToken(String accessToken, String email) {
+        mockData.saveAccessToken(accessToken, email);
+    }
+
+    public List<Venue> findAllVenues() {
+        return mockData.findAllVenues();
+    }
+
+    public Optional<User> findUserByEmail(String email) {
+        return mockData.findByEmail(email);
+    }
+
+    public boolean existsByEmail(String email) {
+        return mockData.existsByEmail(email);
+    }
+
+    public Optional<User> findUserbyAccessToken(String token) {
+        Optional<String> email = mockData.getEmailByAccessToken(token);
+        return email.map(this::findUserByEmail).orElse(null);
+    }
+
+    public Optional<User> findUserbyRefreshToken(String token) {
+        Optional<String> email = mockData.getEmailByRefreshToken(token);
+        return email.map(this::findUserByEmail).orElse(null);
+    }
+
+    public List<User> findAllUsers() {
+        return mockData.findAllUsers();
+    }
+
+    public void deleteVenueById(String id) {
+        mockData.deleteVenueById(id);
+    }
     public Optional<Event> findEvent(Long eventId) {
         return mockData.findEventById(eventId);
     }
@@ -85,9 +86,6 @@ public class FacadeDbRest {
         return mockData.findById(id);
     }
 
-    public List<User> findAllUsers() {
-        return mockData.findAllUsers();
-    }
 
     public Notification saveNotification(Notification notification) {
         if (notification.getId() == null) {

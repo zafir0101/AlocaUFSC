@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../api/event_service.dart';
-import '../../api/notification_service.dart';
 import '../../shell.dart';
 import '../../theme.dart';
 import '../event/event_detail_screen.dart';
 import '../event/event_form_screen.dart';
-import 'notification_model.dart';
+import '../../models/notification_model.dart';
+import 'package:aloca_ufsc_front/main.dart';
 
 const int _allocationTabIndex = 2;
 
@@ -18,9 +17,6 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  final NotificationService _notificationService = NotificationService();
-  final EventService _eventService = EventService();
-
   List<AppNotification> _notifications = [];
   bool _loading = true;
   String? _error;
@@ -36,29 +32,20 @@ class _NotificationScreenState extends State<NotificationScreen> {
       _loading = _notifications.isEmpty;
       _error = null;
     });
-    try {
-      final notifications = await _notificationService.fetchNotifications();
-      if (!mounted) return;
-      setState(() {
-        _notifications = notifications;
-        _loading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
-        _loading = false;
-      });
-    }
-  }
-
-  Future<void> _run(Future<void> Function() action) async {
-    try {
-      await action();
-    } catch (e) {
-      _showMessage(e.toString().replaceFirst('Exception: ', ''));
-    }
-    _load();
+    
+    // Substituído para o uso do appState e padrão Result
+    final result = await appState.fetchNotifications();
+    
+    if (!mounted) return;
+    
+    setState(() {
+      if (result.isError) {
+        _error = result.error.toString().replaceFirst('Exception: ', '');
+      } else {
+        _notifications = result.data ?? [];
+      }
+      _loading = false;
+    });
   }
 
   void _showMessage(String message) {
@@ -66,18 +53,46 @@ class _NotificationScreenState extends State<NotificationScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _delete(AppNotification n) => _run(() => _notificationService.delete(n.id));
+  // Refatorado para o appState e uso do Result
+  Future<void> _delete(AppNotification n) async {
+    final result = await appState.deleteNotification(n.id);
+    if (result.isError) {
+      _showMessage(result.error.toString().replaceFirst('Exception: ', ''));
+    }
+    _load();
+  }
+
+  Future<void> _markAllAsRead() async {
+    final result = await appState.markAllNotificationsAsRead();
+    if (result.isError) {
+      _showMessage(result.error.toString().replaceFirst('Exception: ', ''));
+    }
+    _load();
+  }
+
+  Future<void> _clearRead() async {
+    final result = await appState.deleteReadNotifications();
+    if (result.isError) {
+      _showMessage(result.error.toString().replaceFirst('Exception: ', ''));
+    }
+    _load();
+  }
 
   Future<void> _open(AppNotification n) async {
     if (!n.read) {
-      _notificationService.markAsRead(n.id).then((_) => _load()).catchError((_) {});
+      // Uso do appState para marcar como lida, atualizando apenas se sucesso
+      appState.markNotificationAsRead(n.id).then((result) {
+        if (result.isOk) _load();
+      });
     }
+    
     final action = await showModalBottomSheet<_Action>(
       context: context,
       showDragHandle: true,
       backgroundColor: AppColors.surface,
       builder: (context) => _ActionsSheet(notification: n),
     );
+    
     if (action == null || !mounted) return;
 
     switch (action) {
@@ -93,15 +108,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Future<void> _openEvent(int eventId, {required bool edit}) async {
-    try {
-      final event = await _eventService.fetchEvent(eventId);
-      if (!mounted) return;
-      await Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => edit ? EventFormScreen(event: event) : EventDetailScreen(event: event),
-      ));
-    } catch (e) {
-      _showMessage(e.toString().replaceFirst('Exception: ', ''));
+    final result = await appState.fetchEvent(eventId);
+    
+    if (!mounted) return;
+    
+    if (result.isError) {
+      _showMessage(result.error.toString().replaceFirst('Exception: ', ''));
+      _load();
+      return;
     }
+    
+    final event = result.data!;
+    
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => edit ? EventFormScreen(event: event) : EventDetailScreen(event: event),
+    ));
+    
     _load();
   }
 
@@ -109,6 +131,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   Widget build(BuildContext context) {
     final hasUnread = _notifications.any((n) => !n.read);
     final hasRead = _notifications.any((n) => n.read);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notificações'),
@@ -116,8 +139,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
           if (hasUnread || hasRead)
             PopupMenuButton<String>(
               onSelected: (value) {
-                if (value == 'readAll') _run(_notificationService.markAllAsRead);
-                if (value == 'clearRead') _run(_notificationService.deleteRead);
+                if (value == 'readAll') _markAllAsRead();
+                if (value == 'clearRead') _clearRead();
               },
               itemBuilder: (context) => [
                 if (hasUnread) const PopupMenuItem(value: 'readAll', child: Text('Marcar todas como lidas')),
@@ -166,6 +189,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
     final unread = _notifications.where((n) => !n.read).toList();
     final read = _notifications.where((n) => n.read).toList();
+    
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(

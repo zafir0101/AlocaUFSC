@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../api/event_service.dart';
-import '../../api/session.dart';
-import '../auth/auth_screen.dart';
 import 'event_detail_screen.dart';
 import 'event_form_screen.dart';
-import 'event_model.dart';
+import '../../models/event_model.dart';
 import '../../theme.dart';
+import '../../main.dart';
 
 class EventScreen extends StatefulWidget {
   const EventScreen({super.key});
@@ -16,8 +14,6 @@ class EventScreen extends StatefulWidget {
 }
 
 class _EventScreenState extends State<EventScreen> {
-  final EventService _eventService = EventService();
-
   List<Event> _events = [];
   bool _loading = true;
   String? _error;
@@ -35,10 +31,15 @@ class _EventScreenState extends State<EventScreen> {
     });
 
     try {
-      final events = await _eventService.fetchMyEvents();
+      final result = await appState.fetchMyEvents();
       if (!mounted) return;
+      
       setState(() {
-        _events = events;
+        if (result.isError) {
+          _error = result.error.toString().replaceFirst('Exception: ', '');
+        } else {
+          _events = result.data ?? [];
+        }
         _loading = false;
       });
     } catch (e) {
@@ -62,14 +63,6 @@ class _EventScreenState extends State<EventScreen> {
       MaterialPageRoute(builder: (context) => EventDetailScreen(event: event)),
     );
     _loadEvents();
-  }
-
-  void _logout(BuildContext context) {
-    Session.clear();
-    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const AuthScreen()),
-          (route) => false,
-    );
   }
 
   @override
@@ -99,11 +92,6 @@ class _EventScreenState extends State<EventScreen> {
                 icon: const Icon(Icons.add),
                 label: const Text('Criar evento'),
               ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: 'Sair',
-              onPressed: () => _logout(context),
-            ),
           ],
           bottom: hasEvents
               ? TabBar(

@@ -1,14 +1,12 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:aloca_ufsc_front/models/auth_model.dart';
 
-import 'session.dart';
-
-
-Map<String, String> authHeaders() => {
+Map<String, String> getHeaders(AccessToken accessToken) => {
       'Content-Type': 'application/json',
-      if (Session.token != null) 'Authorization': 'Bearer ${Session.token}',
-    };
+      'Authorization': 'Bearer $accessToken',
+};
 
 dynamic decodeBody(http.Response response) => jsonDecode(utf8.decode(response.bodyBytes));
 

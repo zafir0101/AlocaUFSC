@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../api/venue_service.dart';
 import '../../../theme.dart';
 import '../../../widgets.dart';
-import 'venue_model.dart';
+import 'package:aloca_ufsc_front/models/venue_model.dart';
+import 'package:aloca_ufsc_front/main.dart';
 
-// Cadastro e edição de espaço físico: se [venue] for nulo, cadastra um novo.
-// [initialCenter] e [initialBuilding] já vêm preenchidos quando o cadastro é aberto de dentro de uma pasta.
+const venueRoleLabels = {
+  'STUDENT': 'Discente',
+  'PROFESSOR': 'Docente',
+  'ORGANIZATION': 'Organização',
+  'MANAGER': 'Administrador',
+};
+
 class VenueFormScreen extends StatefulWidget {
   final Venue? venue;
   final String? initialCenter;
@@ -20,7 +25,6 @@ class VenueFormScreen extends StatefulWidget {
 }
 
 class _VenueFormScreenState extends State<VenueFormScreen> {
-  final VenueService _venueService = VenueService();
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _buildingController;
@@ -33,6 +37,8 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
   String? _center;
   String? _rolesError;
   bool _loading = false;
+
+  bool _forcePop = false;
 
   List<CampusCenter> _campus = [];
   bool _campusLoading = true;
@@ -72,10 +78,10 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
       _campusError = null;
     });
     try {
-      final campus = await _venueService.fetchCampus();
+      final campus = await appState.fetchCampus();
       if (!mounted) return;
       setState(() {
-        _campus = campus;
+        _campus = campus.data!;
         _campusLoading = false;
       });
     } catch (e) {
@@ -88,6 +94,7 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
   }
 
   Iterable<String> _buildingOptions(String typed) {
+    // 3. CORREÇÃO: Uso de .where().firstOrNull para Iterables (requer Dart 3)
     final center = _campus.where((c) => c.code == _center).firstOrNull;
     if (center == null) return const [];
     final query = _normalize(typed);
@@ -154,15 +161,16 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
       building: _buildingController.text.trim(),
       code: _codeController.text.trim(),
       name: _nameController.text.trim(),
-      capacity: int.parse(_capacityController.text.trim()),
+      // 4. CORREÇÃO: Usando tryParse. O parse() causaria crash se a string viesse vazia.
+      capacity: int.tryParse(_capacityController.text.trim()) ?? 0, 
       description: _descriptionController.text.trim(),
       allowedRoles: venueRoleLabels.keys.where(_roles.contains).toList(),
     );
 
     try {
       final saved = _isEditing
-          ? await _venueService.updateVenue(widget.venue!.id!, venue)
-          : await _venueService.createVenue(venue);
+          ? await appState.updateVenue(widget.venue!.id!, venue)
+          : await appState.createVenue(venue);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_isEditing ? 'Espaço atualizado.' : 'Espaço cadastrado.')),
@@ -195,8 +203,12 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
         ],
       ),
     );
+    
     if (!mounted) return;
+    
     if (choice == 'discard') {
+      // 5. CORREÇÃO: Liberamos o bloqueio do PopScope antes de fechar a tela.
+      setState(() => _forcePop = true); 
       Navigator.of(context).pop();
     } else if (choice == 'save') {
       await _save();
@@ -219,13 +231,12 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope<Object?>(
-      canPop: false,
+      // 6. CORREÇÃO: Avaliamos o _forcePop para permitir a saída.
+      canPop: _forcePop || !_hasChanges,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop || _loading) return;
         if (_hasChanges) {
           _confirmExit();
-        } else {
-          Navigator.of(context).pop();
         }
       },
       child: Scaffold(

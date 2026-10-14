@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../api/event_service.dart';
 import '../../theme.dart';
 import 'event_form_screen.dart';
-import 'event_model.dart';
+import '../../models/event_model.dart';
+import 'package:aloca_ufsc_front/main.dart'; 
+import '../../models/api_model.dart'; 
 
 class EventDetailScreen extends StatefulWidget {
   final Event event;
@@ -15,8 +16,6 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  final EventService _eventService = EventService();
-
   late Event _event;
   bool _loading = false;
 
@@ -45,7 +44,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           'até você reativá-lo. Você ainda poderá editar a data.',
       confirmLabel: 'Suspender',
       confirmColor: Colors.amber.shade800,
-      action: () => _eventService.suspendEvent(_event.id!),
+      action: () => appState.suspendEvent(_event.id!),
       successMessage: 'Evento suspenso.',
     );
   }
@@ -57,7 +56,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           '${formatPeriod(_event.start, _event.end)}?',
       confirmLabel: 'Reativar',
       confirmColor: AppColors.mainBlue,
-      action: () => _eventService.reactivateEvent(_event.id!),
+      action: () => appState.reactivateEvent(_event.id!),
       successMessage: 'Evento reativado.',
     );
   }
@@ -69,7 +68,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           'ser editado nem reativado.',
       confirmLabel: 'Cancelar evento',
       confirmColor: Colors.red,
-      action: () => _eventService.cancelEvent(_event.id!),
+      action: () => appState.cancelEvent(_event.id!),
       successMessage: 'Evento cancelado.',
     );
   }
@@ -79,7 +78,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     required String dialogMessage,
     required String confirmLabel,
     required Color confirmColor,
-    required Future<Event> Function() action,
+    required ApiRequest<Event> Function() action, 
     required String successMessage,
   }) async {
     final confirmed = await showDialog<bool>(
@@ -104,12 +103,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
     setState(() => _loading = true);
     try {
-      await action();
+      final result = await action();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(successMessage)),
-      );
-      Navigator.of(context).pop();
+
+      if (result.isError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro: ${result.error.toString()}')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(successMessage)),
+        );
+        Navigator.of(context).pop(result.data); 
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,8 +178,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   Widget _buildFinishedNotice() {
     return Text(
       _event.isCancelled
-          ? 'Este evento foi cancelado e não pode mais ser alterado.'
-          : 'Este evento já passou e não pode mais ser alterado.',
+        ? 'Este evento foi cancelado e não pode mais ser alterado.'
+        : 'Este evento já passou e não pode mais ser alterado.',
       textAlign: TextAlign.center,
       style: const TextStyle(color: AppColors.textSecondary),
     );
@@ -181,21 +187,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   Widget _buildActions() {
     final Widget statusButton = _event.isSuspended
-        ? ElevatedButton.icon(
-      onPressed: _loading || !_event.canReactivate ? null : _reactivate,
-      icon: const Icon(Icons.play_arrow),
-      label: const Text('Reativar'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.mainBlue,
-        foregroundColor: Colors.white,
-      ),
-    )
-        : OutlinedButton.icon(
-      onPressed: _loading ? null : _suspend,
-      icon: const Icon(Icons.pause),
-      label: const Text('Suspender'),
-      style: OutlinedButton.styleFrom(foregroundColor: Colors.amber.shade800),
-    );
+      ? ElevatedButton.icon(
+          onPressed: _loading || !_event.canReactivate ? null : _reactivate,
+          icon: const Icon(Icons.play_arrow),
+          label: const Text('Reativar'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.mainBlue,
+            foregroundColor: Colors.white,
+          ),
+        )
+      : OutlinedButton.icon(
+          onPressed: _loading ? null : _suspend,
+          icon: const Icon(Icons.pause),
+          label: const Text('Suspender'),
+          style: OutlinedButton.styleFrom(foregroundColor: Colors.amber.shade800),
+        );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -293,17 +299,12 @@ class _VenueNotice extends StatelessWidget {
                 ? 'O espaço deste evento ainda não foi confirmado pelo administrador.'
                 : 'Este evento ainda não tem espaço. Solicite um espaço na aba Alocações.'),
           ),
-          // TODO(alocação): botão "Solicitar espaço" (sem espaço) ou "Ver solicitação" (pendente),
-          // abrindo a tela de alocação já com este evento selecionado.
         ],
       ),
     );
   }
 }
 
-// Etiqueta do evento (no máximo uma), no canto do card e dos detalhes:
-// situação ("Cancelado" vermelho, "Suspenso" amarelo, "Em andamento" verde) ou, para evento que ainda
-// não começou, o espaço ("Sem espaço" roxo, "Espaço a confirmar" cinza-azulado).
 class EventBadges extends StatelessWidget {
   final Event event;
 

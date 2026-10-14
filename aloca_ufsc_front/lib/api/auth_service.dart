@@ -1,37 +1,51 @@
 import 'dart:convert';
-import 'package:aloca_ufsc_front/user_interface/auth/auth_model.dart';
 import 'package:http/http.dart' as http;
 
-class AuthService {
-  static const String baseUrl = 'http://10.0.2.2:8080/api/auth';
+import 'package:aloca_ufsc_front/models/auth_model.dart';
+import 'package:aloca_ufsc_front/models/api_model.dart'; 
 
-  Future<AuthResponse> login(LoginRequest request) async {
+const String baseUrl = 'http://10.0.2.2:8080/api/auth';
+
+ApiRequest<AuthInfo> login(LoginRequest request) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(request.toJson()),
+        Uri.parse('$baseUrl/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(request.toJson()),
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return AuthResponse.fromJson(jsonDecode(response.body));
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      return Result.error(ApiError.invalidEmailOrPassword);
     }
 
-    final erro = jsonDecode(response.body);
-    throw Exception(erro['mensagem'] ?? 'Falha ao realizar login.');
-  }
+    return Result.ok(AuthInfo.fromJson(jsonDecode(response.body)));
+}
 
-  Future<AuthResponse> signUp(SignUpRequest request) async {
+ApiRequest<AuthInfo> register(SignUpRequest request) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/cadastro'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(request.toJson()),
+        Uri.parse('$baseUrl/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(request.toJson()),
     );
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return AuthResponse.fromJson(jsonDecode(response.body));
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      return Result.error(ApiError.signUpError);
     }
 
-    final erro = jsonDecode(response.body);
-    throw Exception(erro['mensagem'] ?? 'Falha ao cadastrar usuário.');
-  }
+    return Result.ok(AuthInfo.fromJson(jsonDecode(response.body)));
+}
+
+ApiRequest<AuthInfo> refreshToken(String token) async {
+    final requestBody = {'refreshToken': token};
+
+    final response = await http.post(
+        Uri.parse('$baseUrl/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+    );
+
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      return Result.error(ApiError.badRequest);
+    }
+
+    return Result.ok(AuthInfo.fromJson(jsonDecode(response.body)));
 }

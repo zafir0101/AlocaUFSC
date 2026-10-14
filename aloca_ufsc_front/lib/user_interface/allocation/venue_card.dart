@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme.dart';
-import 'venue_model.dart';
+import '../../../models/venue_model.dart';
 
 class VenueCard extends StatelessWidget {
   final Venue venue;

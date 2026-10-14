@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme.dart';
-import '../allocation/manage_venue/venue_admin_screen.dart';
+import '../allocation/venue_admin_screen.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});

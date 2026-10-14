@@ -12,14 +12,24 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-// notificações dentro do app. Qualquer serviço pode avisar um usuário chamando notify(...),
-// por exemplo a alocação ao aprovar ou recusar um pedido.
 @Service
 public class NotificationService {
     private final FacadeDbRest facadeDbRest;
 
     public NotificationService(FacadeDbRest facadeDbRest) {
         this.facadeDbRest = facadeDbRest;
+    }
+
+    public List<Notification> getNotifications(User user) {
+        return facadeDbRest.findNotificationsByRecipient(user).stream()
+                .sorted(Comparator.comparing(Notification::getCreatedAt).reversed())
+                .toList();
+    }
+
+    public long countUnread(User user) {
+        return facadeDbRest.findNotificationsByRecipient(user).stream()
+                .filter(n -> !n.isRead())
+                .count();
     }
 
     public Notification notify(User recipient, NotificationType type, String message, Long eventId) {
@@ -31,10 +41,10 @@ public class NotificationService {
         return notify(recipient, NotificationType.GERAL, message, eventId);
     }
 
-    // usado pelos lembretes automáticos, que rodam de tempos em tempos.
     public void notifyOnce(User recipient, NotificationType type, String message, Long eventId) {
         boolean alreadySent = facadeDbRest.findNotificationsByRecipient(recipient).stream()
                 .anyMatch(n -> n.getType() == type && Objects.equals(n.getEventId(), eventId));
+
         if (!alreadySent) {
             notify(recipient, type, message, eventId);
         }
@@ -42,19 +52,9 @@ public class NotificationService {
 
     public void notifyRoles(Collection<Entity> roles, NotificationType type, String message, Long eventId) {
         facadeDbRest.findAllUsers().stream()
-                .filter(u -> u.getTipoPerfil() != Entity.ADMINISTRADOR)
-                .filter(u -> roles.contains(u.getTipoPerfil()))
+                .filter(u -> u.getEntity() != Entity.MANAGER)
+                .filter(u -> roles.contains(u.getEntity()))
                 .forEach(u -> notify(u, type, message, eventId));
-    }
-
-    public List<Notification> getNotifications(User user) {
-        return facadeDbRest.findNotificationsByRecipient(user).stream()
-                .sorted(Comparator.comparing(Notification::getCreatedAt).reversed())
-                .toList();
-    }
-
-    public long countUnread(User user) {
-        return facadeDbRest.findNotificationsByRecipient(user).stream().filter(n -> !n.isRead()).count();
     }
 
     public Notification markAsRead(User user, Long notificationId) {

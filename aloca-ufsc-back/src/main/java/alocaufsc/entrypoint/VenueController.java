@@ -8,63 +8,58 @@ import alocaufsc.entrypoint.DTO.VenueRequest;
 import alocaufsc.entrypoint.DTO.VenueResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/venues")
-@CrossOrigin(origins = "*") // Allows Flutter calls during local development
+@CrossOrigin(origins = "*")
 public class VenueController {
 
     private final VenueService venueService;
-    private final AuthenticatedUserResolver userResolver;
 
-    public VenueController(VenueService venueService, AuthenticatedUserResolver userResolver) {
+    public VenueController(VenueService venueService) {
         this.venueService = venueService;
-        this.userResolver = userResolver;
     }
 
     @GetMapping
-    public List<VenueResponse> getAllVenues(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        userResolver.resolve(authorization);
+    public List<VenueResponse> getAllVenues() {
         return venueService.getAllVenues().stream().map(VenueResponse::from).toList();
     }
 
-    // Centros da UFSC e prédios sugeridos, para o cadastro e a navegação por pastas.
     @GetMapping("/campus")
-    public List<UfscCampus.Center> getCampus(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        userResolver.resolve(authorization);
+    public List<UfscCampus.Center> getCampus() {
         return venueService.getCampus();
     }
 
     @GetMapping("/{id}")
-    public VenueResponse getVenue(@RequestHeader(value = "Authorization", required = false) String authorization,
-                                  @PathVariable String id) {
-        userResolver.resolve(authorization);
+    public VenueResponse getVenue(@PathVariable String id) {
         return VenueResponse.from(venueService.getVenue(id));
     }
 
     @PostMapping
-    public ResponseEntity<VenueResponse> createVenue(@RequestHeader(value = "Authorization", required = false) String authorization,
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public ResponseEntity<VenueResponse> createVenue(@AuthenticationPrincipal User admin,
                                                      @RequestBody VenueRequest request) {
-        User admin = userResolver.resolve(authorization);
         VenueResponse response = VenueResponse.from(venueService.createVenue(admin, toVenueInfo(request)));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public VenueResponse updateVenue(@RequestHeader(value = "Authorization", required = false) String authorization,
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public VenueResponse updateVenue(@AuthenticationPrincipal User admin,
                                      @PathVariable String id,
                                      @RequestBody VenueRequest request) {
-        User admin = userResolver.resolve(authorization);
         return VenueResponse.from(venueService.updateVenue(admin, id, toVenueInfo(request)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteVenue(@RequestHeader(value = "Authorization", required = false) String authorization,
+    @PreAuthorize("hasAuthority('ADMINISTRADOR')")
+    public ResponseEntity<Void> deleteVenue(@AuthenticationPrincipal User admin,
                                             @PathVariable String id) {
-        User admin = userResolver.resolve(authorization);
         venueService.deleteVenue(admin, id);
         return ResponseEntity.noContent().build();
     }

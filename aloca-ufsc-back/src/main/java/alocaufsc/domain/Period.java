@@ -1,4 +1,4 @@
-package alocaufsc.domain.entities;
+package alocaufsc.domain;
 
 import java.time.LocalDateTime;
 

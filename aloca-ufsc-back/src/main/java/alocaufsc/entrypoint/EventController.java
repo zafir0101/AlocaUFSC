@@ -1,7 +1,8 @@
 package alocaufsc.entrypoint;
 
-import alocaufsc.domain.entities.Period;
+import alocaufsc.domain.Period;
 import alocaufsc.domain.entities.User;
+import alocaufsc.domain.eventsystem.DuplicateEventException;
 import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.domain.eventsystem.EventService;
 import alocaufsc.domain.eventsystem.InfoEvent;
@@ -9,9 +10,13 @@ import alocaufsc.entrypoint.DTO.EventRequest;
 import alocaufsc.entrypoint.DTO.EventResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/events")
@@ -19,69 +24,54 @@ import java.util.List;
 public class EventController {
 
     private final EventService eventService;
-    private final AuthenticatedUserResolver userResolver;
 
-    public EventController(EventService eventService, AuthenticatedUserResolver userResolver) {
+    // Injeção de dependência via construtor (Melhor prática do Spring)
+    public EventController(EventService eventService) {
         this.eventService = eventService;
-        this.userResolver = userResolver;
     }
 
     @GetMapping("/me")
-    public List<EventResponse> getMyEvents(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        User user = authenticatedUser(authorization);
-        return eventService.getEventsByCreator(user).stream().map(this::toResponse).toList();
+    public List<EventResponse> getMyEvents(@AuthenticationPrincipal User user) {
+        return eventService.getEventsByCreator(user).stream()
+                .map(event -> EventResponse.from(event, eventService.getAllocationStatus(event)))
+                .toList();
     }
 
     @GetMapping("/{id}")
-    public EventResponse getEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-                                  @PathVariable Long id) {
-        User user = authenticatedUser(authorization);
-        return toResponse(eventService.getEvent(user, id));
+    public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.getEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
     @PostMapping
-    public ResponseEntity<EventResponse> createEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-                                                     @RequestBody EventRequest request) {
-        User user = authenticatedUser(authorization);
-        EventResponse response = toResponse(eventService.createEvent(user, toInfoEvent(request)));
+    public ResponseEntity<EventResponse> createEvent(@AuthenticationPrincipal User user, @RequestBody EventRequest request) {
+        Event event = eventService.createEvent(user, toInfoEvent(request));
+        EventResponse response = EventResponse.from(event, eventService.getAllocationStatus(event));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
-    public EventResponse editEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-                                   @PathVariable Long id,
-                                   @RequestBody EventRequest request) {
-        User user = authenticatedUser(authorization);
-        return toResponse(eventService.editEvent(user, id, toInfoEvent(request)));
-    }
-
-    @PatchMapping("/{id}/cancel")
-    public EventResponse cancelEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-                                     @PathVariable Long id) {
-        User user = authenticatedUser(authorization);
-        return toResponse(eventService.cancelEvent(user, id));
-    }
-
-    @PatchMapping("/{id}/suspend")
-    public EventResponse suspendEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-                                      @PathVariable Long id) {
-        User user = authenticatedUser(authorization);
-        return toResponse(eventService.suspendEvent(user, id));
-    }
-
-    @PatchMapping("/{id}/reactivate")
-    public EventResponse reactivateEvent(@RequestHeader(value = "Authorization", required = false) String authorization,
-                                         @PathVariable Long id) {
-        User user = authenticatedUser(authorization);
-        return toResponse(eventService.reactivateEvent(user, id));
-    }
-
-    private EventResponse toResponse(Event event) {
+    public EventResponse editEvent(@AuthenticationPrincipal User user, @PathVariable Long id, @RequestBody EventRequest request) {
+        Event event = eventService.editEvent(user, id, toInfoEvent(request));
         return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
-    private User authenticatedUser(String authorization) {
-        return userResolver.resolve(authorization);
+    @PatchMapping("/{id}/cancel")
+    public EventResponse cancelEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.cancelEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
+    }
+
+    @PatchMapping("/{id}/suspend")
+    public EventResponse suspendEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.suspendEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
+    }
+
+    @PatchMapping("/{id}/reactivate")
+    public EventResponse reactivateEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+        Event event = eventService.reactivateEvent(user, id);
+        return EventResponse.from(event, eventService.getAllocationStatus(event));
     }
 
     private InfoEvent toInfoEvent(EventRequest request) {
@@ -89,5 +79,31 @@ public class EventController {
             throw new IllegalArgumentException("Os dados do evento não podem ser nulos.");
         }
         return new InfoEvent(request.title(), request.description(), new Period(request.start(), request.end()), null);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleStatus(ResponseStatusException e) {
+        return ResponseEntity.status(e.getStatusCode()).body(Map.of("mensagem", e.getReason()));
+    }
+
+    @ExceptionHandler(DuplicateEventException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicate(DuplicateEventException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("mensagem", e.getMessage(), "eventoId", e.getExistingEvent().getId()));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Map<String, String>> handleNotFound(NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensagem", e.getMessage()));
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Map<String, String>> handleForbidden(SecurityException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("mensagem", e.getMessage()));
     }
 }

@@ -1,60 +1,90 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 
-import '../user_interface/allocation/manage_venue/venue_model.dart';
-import 'api_helpers.dart';
+import 'package:aloca_ufsc_front/models/venue_model.dart';
+import 'package:aloca_ufsc_front/models/auth_model.dart';
+import 'package:aloca_ufsc_front/models/api_model.dart';
 
-class VenueService {
-  static const String baseUrl = 'http://10.0.2.2:8080/api/venues';
+const String baseUrl = 'http://10.0.2.2:8080/api/venues';
 
-  Future<List<Venue>> fetchVenues() async {
-    final response = await http.get(Uri.parse(baseUrl), headers: authHeaders());
+Map<String, String> _getHeaders(AccessToken token) => {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+};
+
+dynamic _decode(http.Response response) => jsonDecode(utf8.decode(response.bodyBytes));
+
+ApiError _parseError(int statusCode) {
+  if (statusCode == 401) return ApiError.expiredAccessToken;
+  if (statusCode == 403) return ApiError.invalidSession;
+  return ApiError.badRequest;
+}
+
+ApiRequest<List<Venue>> fetchVenues(AccessToken accessToken) async {
+    final response = await http.get(
+        Uri.parse(baseUrl), 
+        headers: _getHeaders(accessToken)
+    );
+
     if (response.statusCode == 200) {
-      final List<dynamic> body = decodeBody(response);
-      return body.map((json) => Venue.fromJson(json)).toList();
+      final List<dynamic> body = _decode(response);
+      return Result.ok(body.map((json) => Venue.fromJson(json)).toList());
     }
-    throw apiError(response, 'Falha ao carregar os espaços.');
-  }
 
-  // Centros da UFSC e prédios sugeridos.
-  Future<List<CampusCenter>> fetchCampus() async {
-    final response = await http.get(Uri.parse('$baseUrl/campus'), headers: authHeaders());
+    return Result.error(_parseError(response.statusCode));
+}
+
+ApiRequest<List<CampusCenter>> fetchCampus(AccessToken accessToken) async {
+    final response = await http.get(
+        Uri.parse('$baseUrl/campus'), 
+        headers: _getHeaders(accessToken)
+    );
+
     if (response.statusCode == 200) {
-      final List<dynamic> body = decodeBody(response);
-      return body.map((json) => CampusCenter.fromJson(json)).toList();
+      final List<dynamic> body = _decode(response);
+      return Result.ok(body.map((json) => CampusCenter.fromJson(json)).toList());
     }
-    throw apiError(response, 'Falha ao carregar os centros da UFSC.');
-  }
 
-  Future<Venue> createVenue(Venue venue) async {
+    return Result.error(_parseError(response.statusCode));
+}
+
+ApiRequest<Venue> createVenue(Venue venue, AccessToken accessToken) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: authHeaders(),
-      body: jsonEncode(venue.toRequestJson()),
+        Uri.parse(baseUrl),
+        headers: _getHeaders(accessToken),
+        body: jsonEncode(venue.toRequestJson()), 
     );
+
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return Venue.fromJson(decodeBody(response));
+      return Result.ok(Venue.fromJson(_decode(response)));
     }
-    throw apiError(response, 'Falha ao cadastrar o espaço.');
-  }
 
-  Future<Venue> updateVenue(String id, Venue venue) async {
+    return Result.error(_parseError(response.statusCode));
+}
+
+ApiRequest<Venue> updateVenue(String id, Venue venue, AccessToken accessToken) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/$id'),
-      headers: authHeaders(),
-      body: jsonEncode(venue.toRequestJson()),
+        Uri.parse('$baseUrl/$id'),
+        headers: _getHeaders(accessToken),
+        body: jsonEncode(venue.toRequestJson()), 
     );
-    if (response.statusCode == 200) {
-      return Venue.fromJson(decodeBody(response));
-    }
-    throw apiError(response, 'Falha ao salvar o espaço.');
-  }
 
-  Future<void> deleteVenue(String id) async {
-    final response = await http.delete(Uri.parse('$baseUrl/$id'), headers: authHeaders());
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw apiError(response, 'Falha ao excluir o espaço.');
+    if (response.statusCode == 200) {
+      return Result.ok(Venue.fromJson(_decode(response)));
     }
-  }
+
+    return Result.error(_parseError(response.statusCode));
+}
+
+ApiRequest<void> deleteVenue(String id, AccessToken accessToken) async {
+    final response = await http.delete(
+        Uri.parse('$baseUrl/$id'), 
+        headers: _getHeaders(accessToken)
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return Result.ok(());
+    }
+
+    return Result.error(_parseError(response.statusCode));
 }

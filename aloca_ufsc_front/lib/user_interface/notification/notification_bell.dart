@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../api/notification_service.dart';
 import '../../theme.dart';
 import 'notification_screen.dart';
+import '../../../main.dart';
 
 class NotificationBell extends StatefulWidget {
   const NotificationBell({super.key});
@@ -12,7 +12,6 @@ class NotificationBell extends StatefulWidget {
 }
 
 class _NotificationBellState extends State<NotificationBell> {
-  final NotificationService _notificationService = NotificationService();
   int _unread = 0;
 
   @override
@@ -23,10 +22,12 @@ class _NotificationBellState extends State<NotificationBell> {
 
   Future<void> _loadUnread() async {
     try {
-      final count = await _notificationService.fetchUnreadCount();
-      if (mounted) setState(() => _unread = count);
+      final result = await appState.fetchUnreadCount();
+      
+      if (mounted && result.isOk) {
+        setState(() => _unread = result.data ?? 0);
+      }
     } catch (_) {
-      // Sem conexão ou sem login: o sino só fica sem contador.
     }
   }
 

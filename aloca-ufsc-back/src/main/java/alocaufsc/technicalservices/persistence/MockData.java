@@ -2,7 +2,7 @@ package alocaufsc.technicalservices.persistence;
 
 import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.Entity;
-import alocaufsc.domain.entities.Period;
+import alocaufsc.domain.Period;
 import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.domain.eventsystem.EventStatus;
@@ -29,7 +29,7 @@ public class MockData {
     private final AtomicLong notificationIdSequence = new AtomicLong();
 
     public MockData() {
-        seed();
+        seed(); // Popula o banco falso ao iniciar a aplicação
     }
 
     public void save(User user) {
@@ -128,32 +128,39 @@ public class MockData {
                 .toList();
     }
 
-    // maria@ufsc.br -> docente com eventos | joao@ufsc.br -> discente sem eventos | admin@ufsc.br -> administrador
+    // maria@ufsc.br -> professor with events | joao@ufsc.br -> student without events | admin@ufsc.br -> manager
     private void seed() {
-        User maria = new User(UUID.randomUUID().toString(), "Maria Silva", "maria@ufsc.br", "123456", Entity.DOCENTE);
-        User joao = new User(UUID.randomUUID().toString(), "João Souza", "joao@ufsc.br", "123456", Entity.DISCENTE);
-        User admin = new User(UUID.randomUUID().toString(), "Administrador", "admin@ufsc.br", "123456", Entity.ADMINISTRADOR);
+        User maria = new User(UUID.randomUUID().toString(), "Maria Silva", "maria@ufsc.br", "123456", Entity.PROFESSOR, "USER");
+        User joao = new User(UUID.randomUUID().toString(), "João Souza", "joao@ufsc.br", "123456", Entity.STUDENT, "USER");
+        User admin = new User(UUID.randomUUID().toString(), "Admin", "admin@ufsc.br", "123456", Entity.MANAGER, "ADMIN");
         save(maria);
         save(joao);
         save(admin);
 
-        seedVenue("CTC", "Bloco A - Direção do CTC", "AUD-01", "Auditório do CTC", 250,
-                "Auditório com projetor, sistema de som e palco.", Entity.DOCENTE, Entity.ORGANIZACAO);
-        seedVenue("CTC", "INE - Informática e Estatística", "LAB-01", "Laboratório de Informática 1", 40,
-                "40 computadores com Linux e projetor.", Entity.DOCENTE);
-        seedVenue("CTC", "INE - Informática e Estatística", "LAB-02", "Laboratório de Informática 2", 30,
-                "30 computadores com Windows.", Entity.DOCENTE);
-        seedVenue("CTC", "INE - Informática e Estatística", "SALA-205", "Sala de Reuniões do INE", 12,
-                "Mesa de reunião e TV para apresentações.", Entity.DISCENTE, Entity.DOCENTE, Entity.ORGANIZACAO);
-        seedVenue("CTC", "EFI - Espaço Físico Integrado", "SALA-101", "Sala 101", 50,
-                "Sala de aula com quadro branco e projetor.", Entity.DISCENTE, Entity.DOCENTE, Entity.ORGANIZACAO);
-        seedVenue("CDS", "Ginásio 1", "GIN-01", "Ginásio de Esportes", 300,
-                "Quadra poliesportiva com arquibancada.", Entity.DOCENTE, Entity.ORGANIZACAO);
-        seedVenue("OUTRO", "Biblioteca Universitária (BU)", "ESP-01", "Espaço de Convivência da BU", 80,
-                "Espaço aberto para exposições e feiras.", Entity.DISCENTE, Entity.DOCENTE, Entity.ORGANIZACAO);
+        seedVenue("CTC", "Block A - CTC Management", "AUD-01", "CTC Auditorium", 250,
+                "Auditorium with projector, sound system, and stage.", Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("CTC", "INE - Informatics and Statistics", "LAB-01", "Computer Lab 1", 40,
+                "40 computers with Linux and a projector.", Entity.PROFESSOR);
+
+        seedVenue("CTC", "INE - Informatics and Statistics", "LAB-02", "Computer Lab 2", 30,
+                "30 computers with Windows.", Entity.PROFESSOR);
+
+        seedVenue("CTC", "INE - Informatics and Statistics", "ROOM-205", "INE Meeting Room", 12,
+                "Meeting table and TV for presentations.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("CTC", "EFI - Integrated Physical Space", "ROOM-101", "Room 101", 50,
+                "Classroom with whiteboard and projector.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("CDS", "Gymnasium 1", "GYM-01", "Sports Gymnasium", 300,
+                "Multi-sport court with bleachers.", Entity.PROFESSOR, Entity.ORGANIZATION);
+
+        seedVenue("OTHER", "University Library (BU)", "ESP-01", "BU Lounge Area", 80,
+                "Open space for exhibitions and fairs.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
 
         LocalDate today = LocalDate.now();
         LocalDateTime currentHour = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS);
+
         seedEvent(maria, "Oficina de Design de Interfaces",
                 "Oficina prática de prototipação de telas.",
                 new Period(currentHour.minusHours(1), currentHour.plusHours(2)), EventStatus.ATIVO);

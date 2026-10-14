@@ -1,6 +1,5 @@
 enum EventStatus { active, suspended, cancelled }
 
-// Situação do evento em relação aos espaços físicos (vem do backend, calculada pelas alocações).
 enum AllocationStatus { none, pending, allocated }
 
 class Event {
@@ -45,8 +44,6 @@ class Event {
 
   bool get canReactivate => isSuspended && !hasEnded;
 
-  // O lembrete de espaço ("Sem espaço" / "Espaço a confirmar") só aparece em evento ativo que ainda não começou.
-  // Em andamento, o evento mostra só "Em andamento" (a pessoa pode ter decidido não usar espaço).
   bool get showsAllocationReminder => status == EventStatus.active && start.isAfter(DateTime.now());
 
   factory Event.fromJson(Map<String, dynamic> json) {

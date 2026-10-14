@@ -36,3 +36,18 @@ Widget textField ({
       ),
     );
 }
+
+void showToast(BuildContext context, String message) {
+ScaffoldMessenger.of(context) 
+..hideCurrentSnackBar()
+..showSnackBar(
+    SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        duration: const Duration(seconds: 2),
+    ),
+);
+}
+

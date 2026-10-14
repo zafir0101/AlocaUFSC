@@ -25,7 +25,7 @@ public record EventResponse(
                 event.getPeriod().end(),
                 event.getStatus().name(),
                 event.getVenue() != null ? event.getVenue().getName() : null,
-                event.getCreator().getNomeCompleto(),
+                event.getCreator().getFullName(),
                 allocationStatus.name()
         );
     }

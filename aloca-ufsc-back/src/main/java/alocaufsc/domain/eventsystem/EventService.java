@@ -1,6 +1,6 @@
 package alocaufsc.domain.eventsystem;
 
-import alocaufsc.domain.entities.Period;
+import alocaufsc.domain.Period;
 import alocaufsc.domain.entities.User;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.stereotype.Service;

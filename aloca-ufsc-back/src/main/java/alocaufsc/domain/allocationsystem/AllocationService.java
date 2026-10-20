@@ -71,6 +71,10 @@ public class AllocationService {
 
         Allocation allocation = new Allocation(null, venue, event, user, info.start(), info.end(),
                 AllocationStatus.PENDING, LocalDateTime.now());
+
+        event.setStatus(EventStatus.AGUARDANDO_APROVACAO);
+        facadeDb.saveEvent(event);
+
         return facadeDb.saveAllocation(allocation);
     }
 
@@ -174,7 +178,7 @@ public class AllocationService {
         Allocation saved = facadeDb.saveAllocation(allocation);
 
         Event event = saved.getEvent();
-        event.setStatus(EventStatus.AGUARDANDO_LOCAL);
+        event.setStatus(EventStatus.SEM_ESPACO);
         facadeDb.saveEvent(event);
 
         String msg = "Seu pedido de alocação do evento \"" + event.getTitle() + "\" em "
@@ -204,7 +208,7 @@ public class AllocationService {
     }
 
     private boolean isAllocatable(Event event) {
-        return event.getStatus() == EventStatus.ATIVO || event.getStatus() == EventStatus.AGUARDANDO_LOCAL;
+        return event.getStatus() == EventStatus.ATIVO || event.getStatus() == EventStatus.AGUARDANDO_APROVACAO;
     }
 
     private boolean hasOpenAllocation(Long eventId) {

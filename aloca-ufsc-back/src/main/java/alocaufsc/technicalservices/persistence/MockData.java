@@ -10,6 +10,7 @@ import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.domain.eventsystem.EventStatus;
 import alocaufsc.domain.notificationsystem.Notification;
 import alocaufsc.domain.notificationsystem.NotificationType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -161,7 +162,6 @@ public class MockData {
                 .toList();
     }
 
-    /** Somente alocações APPROVED bloqueiam o espaço. */
     public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, Long ignoreAllocationId) {
         return venues.values().stream()
                 .filter(v -> allocations.values().stream().noneMatch(a ->
@@ -174,10 +174,10 @@ public class MockData {
 
     // maria@ufsc.br -> professor with events | joao@ufsc.br -> student without events | admin@ufsc.br -> manager
     private void seed() {
-        User maria = new User(UUID.randomUUID().toString(), "Maria Silva", "maria@ufsc.br", "123456", Entity.PROFESSOR, "USER");
-        User joao = new User(UUID.randomUUID().toString(), "João Souza", "joao@ufsc.br", "123456", Entity.STUDENT, "USER");
-        User admin = new User(UUID.randomUUID().toString(), "Admin", "admin@ufsc.br", "123456", Entity.MANAGER, "ADMIN");
-        save(maria);
+        String password = new BCryptPasswordEncoder().encode("123456");
+        User maria = new User(UUID.randomUUID().toString(), "Maria Silva", "maria@ufsc.br", password, Entity.PROFESSOR, "USER");
+        User joao = new User(UUID.randomUUID().toString(), "João Souza", "joao@ufsc.br", password, Entity.STUDENT, "USER");
+        User admin = new User(UUID.randomUUID().toString(), "Admin", "admin@ufsc.br", password, Entity.MANAGER, "ADMIN");        save(maria);
         save(joao);
         save(admin);
 

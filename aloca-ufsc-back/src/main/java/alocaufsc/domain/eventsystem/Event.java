@@ -1,6 +1,8 @@
 package alocaufsc.domain.eventsystem;
 
 import alocaufsc.domain.Period;
+import alocaufsc.domain.allocationsystem.Allocation;
+import alocaufsc.domain.allocationsystem.AllocationStatus;
 import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
 
@@ -39,6 +41,13 @@ public class Event {
     public void setPeriod(Period period) { this.period = period; }
     public EventStatus getStatus() { return status; }
     public void setStatus(EventStatus status) { this.status = status; }
+    public void setStatusWithAllocationStatus(AllocationStatus allocationStatus) {
+        switch (allocationStatus) {
+            case AllocationStatus.APPROVED -> this.status = EventStatus.ATIVO;
+            case AllocationStatus.REJECTED -> this.status = EventStatus.SEM_ESPACO;
+            case AllocationStatus.PENDING -> this.status = EventStatus.AGUARDANDO_APROVACAO;
+        }
+    }
     public Venue getVenue() { return venue; }
     public void setVenue(Venue venue) { this.venue = venue; }
     public User getCreator() { return creator; }

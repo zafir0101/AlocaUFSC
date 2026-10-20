@@ -126,7 +126,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Detalhes do evento')),
@@ -146,9 +146,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           const SizedBox(height: 24),
           _DetailItem(icon: Icons.calendar_today, label: 'Período', value: formatPeriod(_event.start, _event.end)),
-          _DetailItem(icon: Icons.place_outlined, label: 'Local', value: _venueText()),
-          if (_event.showsAllocationReminder && _event.allocationStatus != AllocationStatus.allocated)
-            _VenueNotice(pending: _event.allocationStatus == AllocationStatus.pending),
+          _DetailItem(icon: Icons.place_outlined, label: 'Local / Alocação', value: _venueText()),
+          if (_event.showsAllocationReminder && _event.status != EventStatus.active)
+            _VenueNotice(pending: _event.status == EventStatus.pending),
           if (_event.creatorName != null)
             _DetailItem(icon: Icons.person_outline, label: 'Organizador', value: _event.creatorName!),
           _DetailItem(
@@ -168,12 +168,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   String _venueText() {
-    if (_event.allocationStatus == AllocationStatus.allocated) {
-      // TODO(alocação): com várias alocações, mostrar a lista de espaços e horários em vez de um nome só.
-      return _event.venueName ?? 'Espaço alocado';
+    if (_event.status == EventStatus.active) {
+      return _event.venueName != null && _event.venueName!.isNotEmpty
+          ? _event.venueName!
+          : 'Espaço alocado';
+    }
+    if (_event.status == EventStatus.pending) {
+      return _event.venueName != null && _event.venueName!.isNotEmpty
+          ? '${_event.venueName!} (Aguardando aprovação)'
+          : 'Aguardando aprovação de espaço';
     }
     return 'Local a definir';
-  }
+}
 
   Widget _buildFinishedNotice() {
     return Text(
@@ -333,21 +339,21 @@ class EventBadges extends StatelessWidget {
         foreground: Colors.teal.shade700,
       );
     }
-    if (event.allocationStatus == AllocationStatus.allocated) {
+    if (event.status == EventStatus.active) {
       return _Badge(
         label: 'Ativo',
         background: Colors.green.shade50,
         foreground: Colors.green.shade700,
       );
     }
-    if (event.allocationStatus == AllocationStatus.pending) {
+    if (event.status == EventStatus.pending) {
       return _Badge(
         label: 'Espaço a confirmar',
         background: Colors.indigo.shade50,
         foreground: Colors.indigo.shade700,
       );
     }
-    if (event.showsAllocationReminder && event.allocationStatus == AllocationStatus.none) {
+    if (event.showsAllocationReminder) {
       return _Badge(
         label: 'Sem espaço',
         background: Colors.purple.shade50,

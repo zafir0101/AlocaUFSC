@@ -4,7 +4,7 @@ import '../../../models/venue_model.dart';
 import '../../../models/api_model.dart';
 import '../../../theme.dart';
 import '../../../main.dart'; 
-import 'allocation_form_screen.dart'; // ✅ Importe a tela do formulário aqui
+import 'allocation_form_screen.dart';
 
 class VenueScreen extends StatefulWidget {
   const VenueScreen({super.key});
@@ -110,11 +110,9 @@ class _VenueScreenState extends State<VenueScreen> {
                     itemBuilder: (context, index) {
                       final item = venues[index];
                       
-                      // ✅ Envolvemos o card do espaço num InkWell para permitir o toque
                       return InkWell(
                         borderRadius: BorderRadius.circular(8),
                         onTap: () {
-                          // ✅ Navega para a tela de formulário passando a Venue
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => AllocationFormScreen(venue: item),

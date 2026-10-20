@@ -1,6 +1,4 @@
-enum EventStatus { active, suspended, cancelled }
-
-enum AllocationStatus { none, pending, allocated }
+enum EventStatus { noVenue, pending, active, suspended, cancelled }
 
 class Event {
   final int? id;
@@ -11,7 +9,6 @@ class Event {
   final EventStatus status;
   final String? venueName;
   final String? creatorName;
-  final AllocationStatus allocationStatus;
 
   Event({
     this.id,
@@ -19,10 +16,9 @@ class Event {
     required this.description,
     required this.start,
     required this.end,
-    this.status = EventStatus.active,
+    this.status = EventStatus.noVenue,
     this.venueName,
     this.creatorName,
-    this.allocationStatus = AllocationStatus.none,
   });
 
   bool get isCancelled => status == EventStatus.cancelled;
@@ -44,30 +40,34 @@ class Event {
 
   bool get canReactivate => isSuspended && !hasEnded;
 
-  bool get showsAllocationReminder => status == EventStatus.active && start.isAfter(DateTime.now());
+  bool get showsAllocationReminder => status == EventStatus.noVenue && start.isAfter(DateTime.now());
 
-  factory Event.fromJson(Map<String, dynamic> json) {
-    return Event(
-      id: json['id'],
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      start: DateTime.parse(json['start']),
-      end: DateTime.parse(json['end']),
-      status: switch (json['status']) {
-        'SUSPENSO' => EventStatus.suspended,
-        'CANCELADO' => EventStatus.cancelled,
-        _ => EventStatus.active,
-      },
-      venueName: json['venueName'],
-      creatorName: json['creatorName'],
-      allocationStatus: switch (json['allocationStatus']) {
-        'AGUARDANDO_APROVACAO' => AllocationStatus.pending,
-        'ALOCADO' => AllocationStatus.allocated,
-        _ => AllocationStatus.none,
-      },
-    );
+factory Event.fromJson(Map<String, dynamic> json) {
+  return Event(
+    id: json['id'],
+    title: json['title'] ?? '',
+    description: json['description'] ?? '',
+    start: DateTime.parse(json['start']),
+    end: DateTime.parse(json['end']),
+    venueName: json['venueName'] ?? json['venue']?['name'],
+    status: _parseEventStatus(json['status'])
+  );
+}
+
+static EventStatus _parseEventStatus(String? status) {
+  switch (status) {
+    case 'AGUARDANDO_APROVACAO':
+      return EventStatus.pending;
+    case 'ATIVO':
+      return EventStatus.active;
+    case 'SUSPENSO':
+      return EventStatus.suspended;
+    case 'CANCELADO':
+      return EventStatus.cancelled;
+    default:
+      return EventStatus.noVenue;
   }
-
+}
   Map<String, dynamic> toRequestJson() {
     return {
       'title': title,

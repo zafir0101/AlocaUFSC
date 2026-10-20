@@ -71,7 +71,7 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
         backgroundColor: approve ? Colors.green : Colors.red,
       ));
       
-      _loadRequests(); // Atualiza a lista
+      _loadRequests();
     } catch (e) {
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,7 +90,7 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
     return RefreshIndicator(
       onRefresh: _loadRequests,
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, 80 + MediaQuery.paddingOf(context).bottom),
         itemCount: _requests.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
@@ -113,9 +113,9 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      OutlinedButton(
+                      ElevatedButton(
                         onPressed: () => _handleAction(req, false),
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                         child: const Text('Rejeitar'),
                       ),
                       const SizedBox(width: 8),

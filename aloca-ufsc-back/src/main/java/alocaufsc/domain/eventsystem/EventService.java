@@ -30,7 +30,7 @@ public class EventService {
         }
         checkDuplicate(u, null, ie);
 
-        Event event = new Event(null, ie.title().trim(), ie.description(), ie.period(), EventStatus.ATIVO, ie.venue(), u);
+        Event event = new Event(null, ie.title().trim(), ie.description(), ie.period(), EventStatus.SEM_ESPACO, ie.venue(), u);
         return facadeDbRest.saveEvent(event);
     }
 

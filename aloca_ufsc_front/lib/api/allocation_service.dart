@@ -85,7 +85,6 @@ ApiRequest<List<Allocation>> fetchAllocationsByStatus(
 
   if (response.statusCode == 200) {
     final List<dynamic> body = _decode(response);
-    // ✅ CORREÇÃO: Adicionado <Allocation> ao map
     return Result.ok(body.map<Allocation>((json) => Allocation.fromJson(json)).toList());
   }
 

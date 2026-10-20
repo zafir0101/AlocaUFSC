@@ -208,7 +208,7 @@ public class AllocationService {
     }
 
     private boolean isAllocatable(Event event) {
-        return event.getStatus() == EventStatus.ATIVO || event.getStatus() == EventStatus.AGUARDANDO_APROVACAO;
+        return event.getStatus() == EventStatus.SEM_ESPACO;
     }
 
     private boolean hasOpenAllocation(Long eventId) {

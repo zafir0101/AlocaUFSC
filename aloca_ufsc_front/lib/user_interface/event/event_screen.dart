@@ -52,14 +52,14 @@ class _EventScreenState extends State<EventScreen> {
   }
 
   Future<void> _openCreateForm() async {
-    await Navigator.of(context).push<Event>(
+    await Navigator.of(context, rootNavigator: true).push<Event>(
       MaterialPageRoute(builder: (context) => const EventFormScreen()),
     );
     _loadEvents();
   }
 
   Future<void> _openDetails(Event event) async {
-    await Navigator.of(context).push(
+    await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(builder: (context) => EventDetailScreen(event: event)),
     );
     _loadEvents();
@@ -262,7 +262,7 @@ class _EventCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 _InfoRow(
                   icon: Icons.place_outlined,
-                  text: event.allocationStatus == AllocationStatus.allocated
+                  text: event.status == EventStatus.active
                       ? (event.venueName ?? 'Espaço alocado')
                       : 'Local a definir',
                 ),

@@ -110,16 +110,16 @@ public class EventService {
         return facadeDbRest.saveEvent(event);
     }
 
-    public EventAllocationStatus getAllocationStatus(Event event) {
+    public EventStatus getEventStatus(Event event) {
         List<Allocation> allocations = facadeDbRest.findAllocationsByEvent(event.getId());
 
         if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.APPROVED)) {
-            return EventAllocationStatus.ALOCADO;
+            return EventStatus.ATIVO;
         }
         if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.PENDING)) {
-            return EventAllocationStatus.AGUARDANDO_APROVACAO;
+            return EventStatus.AGUARDANDO_APROVACAO;
         }
-        return EventAllocationStatus.SEM_ESPACO;
+        return EventStatus.SEM_ESPACO;
     }
 
     private Event getOwnedEvent(User u, Long eventId) {

@@ -25,7 +25,6 @@ public class EventController {
 
     private final EventService eventService;
 
-    // Injeção de dependência via construtor (Melhor prática do Spring)
     public EventController(EventService eventService) {
         this.eventService = eventService;
     }
@@ -33,45 +32,45 @@ public class EventController {
     @GetMapping("/me")
     public List<EventResponse> getMyEvents(@AuthenticationPrincipal User user) {
         return eventService.getEventsByCreator(user).stream()
-                .map(event -> EventResponse.from(event, eventService.getAllocationStatus(event)))
+                .map(event -> EventResponse.from(event))
                 .toList();
     }
 
     @GetMapping("/{id}")
     public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
         Event event = eventService.getEvent(user, id);
-        return EventResponse.from(event, eventService.getAllocationStatus(event));
+        return EventResponse.from(event);
     }
 
     @PostMapping
     public ResponseEntity<EventResponse> createEvent(@AuthenticationPrincipal User user, @RequestBody EventRequest request) {
         Event event = eventService.createEvent(user, toInfoEvent(request));
-        EventResponse response = EventResponse.from(event, eventService.getAllocationStatus(event));
+        EventResponse response = EventResponse.from(event);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
     public EventResponse editEvent(@AuthenticationPrincipal User user, @PathVariable Long id, @RequestBody EventRequest request) {
         Event event = eventService.editEvent(user, id, toInfoEvent(request));
-        return EventResponse.from(event, eventService.getAllocationStatus(event));
+        return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/cancel")
     public EventResponse cancelEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
         Event event = eventService.cancelEvent(user, id);
-        return EventResponse.from(event, eventService.getAllocationStatus(event));
+        return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/suspend")
     public EventResponse suspendEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
         Event event = eventService.suspendEvent(user, id);
-        return EventResponse.from(event, eventService.getAllocationStatus(event));
+        return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/reactivate")
     public EventResponse reactivateEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
         Event event = eventService.reactivateEvent(user, id);
-        return EventResponse.from(event, eventService.getAllocationStatus(event));
+        return EventResponse.from(event);
     }
 
     private InfoEvent toInfoEvent(EventRequest request) {

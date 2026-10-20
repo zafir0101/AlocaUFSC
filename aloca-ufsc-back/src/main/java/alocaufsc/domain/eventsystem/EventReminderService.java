@@ -41,10 +41,10 @@ public class EventReminderService {
         LocalDateTime start = event.getPeriod().start();
         if (!start.isAfter(now)) return;
 
-        EventAllocationStatus allocation = eventService.getAllocationStatus(event);
-        if (allocation == EventAllocationStatus.ALOCADO) return;
+        EventStatus eventStatus = eventService.getEventStatus(event);
+        if (eventStatus == EventStatus.ATIVO) return;
 
-        String situation = allocation == EventAllocationStatus.AGUARDANDO_APROVACAO
+        String situation = eventStatus == EventStatus.AGUARDANDO_APROVACAO
                 ? "o espaço ainda não foi confirmado."
                 : "ainda não tem espaço definido.";
         Duration untilStart = Duration.between(now, start);

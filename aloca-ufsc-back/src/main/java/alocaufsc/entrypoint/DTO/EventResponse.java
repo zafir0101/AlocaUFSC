@@ -1,7 +1,7 @@
 package alocaufsc.entrypoint.DTO;
 
 import alocaufsc.domain.eventsystem.Event;
-import alocaufsc.domain.eventsystem.EventAllocationStatus;
+import alocaufsc.domain.eventsystem.EventStatus;
 
 import java.time.LocalDateTime;
 
@@ -13,10 +13,9 @@ public record EventResponse(
         LocalDateTime end,
         String status,
         String venueName,
-        String creatorName,
-        String allocationStatus
+        String creatorName
 ) {
-    public static EventResponse from(Event event, EventAllocationStatus allocationStatus) {
+    public static EventResponse from(Event event) {
         return new EventResponse(
                 event.getId(),
                 event.getTitle(),
@@ -25,8 +24,7 @@ public record EventResponse(
                 event.getPeriod().end(),
                 event.getStatus().name(),
                 event.getVenue() != null ? event.getVenue().getName() : null,
-                event.getCreator().getFullName(),
-                allocationStatus.name()
+                event.getCreator().getFullName()
         );
     }
 }

@@ -30,6 +30,11 @@ public class VenueController {
         return venueService.getAllVenues(user).stream().map(VenueResponse::from).toList();
     }
 
+    @GetMapping("/filter")
+    public List<VenueResponse> getVenuesWithFilter(@AuthenticationPrincipal User user) {
+        return venueService.getVenuesWithFilter(user).stream().map(VenueResponse::from).toList();
+    }
+
     @GetMapping("/campus")
     public List<UfscCampus.Center> getCampus() {
         return venueService.getCampus();

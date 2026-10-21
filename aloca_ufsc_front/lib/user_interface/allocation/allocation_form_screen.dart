@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/venue_model.dart';
 import '../../../models/allocation_model.dart';
+import '../../../models/event_model.dart';
 import '../../../main.dart';
 import '../../../theme.dart';
 
@@ -16,11 +17,11 @@ class AllocationFormScreen extends StatefulWidget {
 class _AllocationFormScreenState extends State<AllocationFormScreen> {
   bool _loading = true;
   String? _error;
-  List<EventOption> _events = [];
+  List<Event> _events = [];
   
-  EventOption? _selectedEvent;
-  DateTime _start = DateTime.now().add(const Duration(days: 1));
-  DateTime _end = DateTime.now().add(const Duration(days: 1, hours: 2));
+  Event? _selectedEvent;
+  DateTime? _start;
+  DateTime? _end; 
 
   @override
   void initState() {
@@ -41,7 +42,11 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
       } else {
         setState(() {
           _events = result.data ?? [];
-          if (_events.isNotEmpty) _selectedEvent = _events.first;
+          if (_events.isNotEmpty) {
+              _selectedEvent = _events.first;
+              _start = _selectedEvent!.start;
+              _end = _selectedEvent!.end;
+          }
           _loading = false;
         });
       }
@@ -61,16 +66,15 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
     
     try {
       final result = await appState.createAllocation(
-        _selectedEvent!.id, 
+        _selectedEvent!.id!, 
         widget.venue.id!, 
-        _start, 
-        _end
+        _start!, 
+        _end!
       );
       
       if (!mounted) return;
       
       if (result.isError) {
-        // Se retornar isError aqui, significa falha na renovação da sessão
         throw Exception("Sessão inválida. Tente fazer login novamente.");
       }
 
@@ -109,28 +113,32 @@ class _AllocationFormScreenState extends State<AllocationFormScreen> {
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
-                DropdownButtonFormField<EventOption>(
+                DropdownButtonFormField<Event>(
                   decoration: const InputDecoration(labelText: 'Selecione o Evento', border: OutlineInputBorder()),
                   value: _selectedEvent,
                   items: _events.map((e) => DropdownMenuItem(
                     value: e,
                     child: Text(e.title),
                   )).toList(),
-                  onChanged: (val) => setState(() => _selectedEvent = val),
+                  onChanged: (val) => setState(() { 
+                        _selectedEvent = val;
+                        _start = _selectedEvent!.start;
+                        _end = _selectedEvent!.end;
+                    }),
                 ),
                 const SizedBox(height: 24),
                 ListTile(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade300)),
                   leading: const Icon(Icons.access_time),
                   title: const Text('Início'),
-                  subtitle: Text(_start.toString().substring(0, 16)),
+                  subtitle: Text(_start != null ? _start.toString().substring(0, 16) : "Evento não selecionado."),
                 ),
                 const SizedBox(height: 12),
                 ListTile(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: Colors.grey.shade300)),
                   leading: const Icon(Icons.access_time),
                   title: const Text('Fim'),
-                  subtitle: Text(_end.toString().substring(0, 16)), 
+                  subtitle: Text(_end != null ? _end.toString().substring(0, 16) : "Evento não selecionado."), 
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(

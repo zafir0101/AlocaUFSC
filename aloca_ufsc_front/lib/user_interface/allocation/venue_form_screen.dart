@@ -173,7 +173,6 @@ Future<void> _save() async {
           
       if (!mounted) return;
 
-      // 1. Verifica se houve falha de sessão
       if (result.isError) {
          throw Exception("Sessão inválida. Tente fazer login novamente.");
       }
@@ -182,10 +181,8 @@ Future<void> _save() async {
         SnackBar(content: Text(_isEditing ? 'Espaço atualizado.' : 'Espaço cadastrado.')),
       );
 
-      // 2. Avisa ao PopScope que pode libertar a tela
       setState(() => _forcePop = true); 
       
-      // 3. Fecha a tela passando os dados salvos
       Navigator.of(context).pop(result.data); 
       
     } catch (e) {

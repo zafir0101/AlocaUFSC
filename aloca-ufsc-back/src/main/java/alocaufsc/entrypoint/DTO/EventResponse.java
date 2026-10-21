@@ -6,7 +6,7 @@ import alocaufsc.domain.eventsystem.EventStatus;
 import java.time.LocalDateTime;
 
 public record EventResponse(
-        Long id,
+        String id,
         String title,
         String description,
         LocalDateTime start,

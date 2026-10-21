@@ -54,7 +54,7 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
           );
         }
       );
-      if (inputReason == null) return; // Cancelou
+      if (inputReason == null) return;
       reason = inputReason;
     }
 

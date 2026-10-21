@@ -6,11 +6,7 @@ import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 public class NotificationService {
@@ -32,16 +28,17 @@ public class NotificationService {
                 .count();
     }
 
-    public Notification notify(User recipient, NotificationType type, String message, Long eventId) {
-        Notification notification = new Notification(null, recipient, type, message, eventId, LocalDateTime.now(), false);
+    public Notification notify(User recipient, NotificationType type, String message, String eventId) {
+        Notification notification = new Notification(UUID.randomUUID().toString(), recipient, type, message, eventId,
+                LocalDateTime.now(), false);
         return facadeDbRest.saveNotification(notification);
     }
 
-    public Notification notify(User recipient, String message, Long eventId) {
+    public Notification notify(User recipient, String message, String eventId) {
         return notify(recipient, NotificationType.GERAL, message, eventId);
     }
 
-    public void notifyOnce(User recipient, NotificationType type, String message, Long eventId) {
+    public void notifyOnce(User recipient, NotificationType type, String message, String eventId) {
         boolean alreadySent = facadeDbRest.findNotificationsByRecipient(recipient).stream()
                 .anyMatch(n -> n.getType() == type && Objects.equals(n.getEventId(), eventId));
 
@@ -50,14 +47,14 @@ public class NotificationService {
         }
     }
 
-    public void notifyRoles(Collection<Entity> roles, NotificationType type, String message, Long eventId) {
+    public void notifyRoles(Collection<Entity> roles, NotificationType type, String message, String eventId) {
         facadeDbRest.findAllUsers().stream()
                 .filter(u -> u.getEntity() != Entity.MANAGER)
                 .filter(u -> roles.contains(u.getEntity()))
                 .forEach(u -> notify(u, type, message, eventId));
     }
 
-    public Notification markAsRead(User user, Long notificationId) {
+    public Notification markAsRead(User user, String notificationId) {
         Notification notification = getOwned(user, notificationId);
         notification.setRead(true);
         return facadeDbRest.saveNotification(notification);
@@ -70,7 +67,7 @@ public class NotificationService {
         });
     }
 
-    public void delete(User user, Long notificationId) {
+    public void delete(User user, String notificationId) {
         facadeDbRest.deleteNotification(getOwned(user, notificationId).getId());
     }
 
@@ -80,7 +77,7 @@ public class NotificationService {
                 .forEach(n -> facadeDbRest.deleteNotification(n.getId()));
     }
 
-    private Notification getOwned(User user, Long notificationId) {
+    private Notification getOwned(User user, String notificationId) {
         return facadeDbRest.findNotification(notificationId)
                 .filter(n -> n.isFor(user))
                 .orElseThrow(() -> new NoSuchElementException("Notificação não encontrada."));

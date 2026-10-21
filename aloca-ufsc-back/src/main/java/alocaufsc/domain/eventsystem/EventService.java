@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
 public class EventService {
@@ -30,7 +31,8 @@ public class EventService {
         }
         checkDuplicate(u, null, ie);
 
-        Event event = new Event(null, ie.title().trim(), ie.description(), ie.period(), EventStatus.SEM_ESPACO, ie.venue(), u);
+        Event event = new Event(UUID.randomUUID().toString(), ie.title().trim(), ie.description(), ie.period(),
+                EventStatus.SEM_ESPACO, ie.venue(), u);
         return facadeDbRest.saveEvent(event);
     }
 
@@ -41,11 +43,11 @@ public class EventService {
                 .toList();
     }
 
-    public Event getEvent(User u, Long eventId) {
+    public Event getEvent(User u, String eventId) {
         return getOwnedEvent(u, eventId);
     }
 
-    public Event editEvent(User u, Long eventId, InfoEvent newData) {
+    public Event editEvent(User u, String eventId, InfoEvent newData) {
         Event event = getOwnedEvent(u, eventId);
         if (event.getStatus() == EventStatus.CANCELADO) {
             throw new IllegalArgumentException("Não é possível editar um evento cancelado.");
@@ -75,7 +77,7 @@ public class EventService {
         return facadeDbRest.saveEvent(event);
     }
 
-    public Event suspendEvent(User u, Long eventId) {
+    public Event suspendEvent(User u, String eventId) {
         Event event = getOwnedEvent(u, eventId);
         if (event.getStatus() != EventStatus.ATIVO) {
             throw new IllegalArgumentException("Apenas eventos ativos podem ser suspensos.");
@@ -86,7 +88,7 @@ public class EventService {
         return facadeDbRest.saveEvent(event);
     }
 
-    public Event reactivateEvent(User u, Long eventId) {
+    public Event reactivateEvent(User u, String eventId) {
         Event event = getOwnedEvent(u, eventId);
         if (event.getStatus() != EventStatus.SUSPENSO) {
             throw new IllegalArgumentException("Apenas eventos suspensos podem ser reativados.");
@@ -97,7 +99,7 @@ public class EventService {
         return facadeDbRest.saveEvent(event);
     }
 
-    public Event cancelEvent(User u, Long eventId) {
+    public Event cancelEvent(User u, String eventId) {
         Event event = getOwnedEvent(u, eventId);
         if (event.getStatus() == EventStatus.CANCELADO) {
             throw new IllegalArgumentException("O evento já está cancelado.");
@@ -108,6 +110,13 @@ public class EventService {
 
         event.setStatus(EventStatus.CANCELADO);
         return facadeDbRest.saveEvent(event);
+    }
+
+    public List<Event> getEligibleEvents(User user) {
+        ensureUser(user);
+        return facadeDbRest.findEventsByCreator(user).stream()
+                .filter(Event::isAllocatable)
+                .toList();
     }
 
     public EventStatus getEventStatus(Event event) {
@@ -122,7 +131,7 @@ public class EventService {
         return EventStatus.SEM_ESPACO;
     }
 
-    private Event getOwnedEvent(User u, Long eventId) {
+    private Event getOwnedEvent(User u, String eventId) {
         Event event = facadeDbRest.findEvent(eventId)
                 .orElseThrow(() -> new NoSuchElementException("Evento não encontrado."));
         if (!event.isCreatedBy(u)) {
@@ -155,7 +164,7 @@ public class EventService {
         }
     }
 
-    private void checkDuplicate(User u, Long ignoredEventId, InfoEvent ie) {
+    private void checkDuplicate(User u, String ignoredEventId, InfoEvent ie) {
         String title = ie.title().trim();
         facadeDbRest.findEventsByCreator(u).stream()
                 .filter(e -> !e.getId().equals(ignoredEventId))
@@ -170,5 +179,12 @@ public class EventService {
 
     private boolean overlaps(Period a, Period b) {
         return a.start().isBefore(b.end()) && b.start().isBefore(a.end());
+    }
+
+
+    private void ensureUser(User user) {
+        if (user == null) {
+            throw new SecurityException("Usuário não autenticado.");
+        }
     }
 }

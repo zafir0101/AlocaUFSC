@@ -50,7 +50,6 @@ class _VenueAdminScreenState extends State<VenueAdminScreen> {
     });
     
     try {
-      // Dispara as duas chamadas simultaneamente
       final venuesFuture = appState.fetchVenues();
       final campusFuture = appState.fetchCampus();
       

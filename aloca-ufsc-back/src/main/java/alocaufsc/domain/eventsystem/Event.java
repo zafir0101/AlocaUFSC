@@ -7,7 +7,7 @@ import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
 
 public class Event {
-    private Long id;
+    private String id;
     private String title;
     private String description;
     private Period period;
@@ -17,7 +17,7 @@ public class Event {
 
     public Event() {}
 
-    public Event(Long id, String title, String description, Period period, EventStatus status, Venue venue, User creator) {
+    public Event(String id, String title, String description, Period period, EventStatus status, Venue venue, User creator) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -31,8 +31,8 @@ public class Event {
         return creator != null && user != null && creator.getId().equals(user.getId());
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getDescription() { return description; }
@@ -52,4 +52,5 @@ public class Event {
     public void setVenue(Venue venue) { this.venue = venue; }
     public User getCreator() { return creator; }
     public void setCreator(User creator) { this.creator = creator; }
+    public boolean isAllocatable() { return this.status == EventStatus.SEM_ESPACO; }
 }

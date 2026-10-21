@@ -29,25 +29,8 @@ ApiError? _checkSessionError(int statusCode) {
   return null;
 }
 
-ApiRequest<List<EventOption>> fetchEligibleEvents(AccessToken accessToken) async {
-  final response = await http.get(
-    Uri.parse('$baseUrl/eligible-events'),
-    headers: _getHeaders(accessToken),
-  );
-
-  if (response.statusCode == 200) {
-    final List<dynamic> body = _decode(response);
-    return Result.ok(body.map<EventOption>((json) => EventOption.fromJson(json)).toList());
-  }
-
-  final sessionError = _checkSessionError(response.statusCode);
-  if (sessionError != null) return Result.error(sessionError);
-
-  throw Exception(_extractMessage(response));
-}
-
 ApiRequest<Allocation> createAllocation(
-  int eventId,
+  String eventId,
   String venueId,
   DateTime start,
   DateTime end,
@@ -94,7 +77,7 @@ ApiRequest<List<Allocation>> fetchAllocationsByStatus(
   throw Exception(_extractMessage(response));
 }
 
-ApiRequest<Allocation> approveAllocation(int id, AccessToken accessToken) async {
+ApiRequest<Allocation> approveAllocation(String id, AccessToken accessToken) async {
   final response = await http.post(
     Uri.parse('$baseUrl/$id/approve'),
     headers: _getHeaders(accessToken),
@@ -111,7 +94,7 @@ ApiRequest<Allocation> approveAllocation(int id, AccessToken accessToken) async 
 }
 
 ApiRequest<Allocation> rejectAllocation(
-  int id,
+  String id,
   String? reason,
   AccessToken accessToken,
 ) async {

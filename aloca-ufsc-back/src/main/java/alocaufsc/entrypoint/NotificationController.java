@@ -33,7 +33,7 @@ public class NotificationController {
     }
 
     @PatchMapping("/{id}/read")
-    public NotificationResponse markAsRead(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public NotificationResponse markAsRead(@AuthenticationPrincipal User user, @PathVariable String id) {
         return NotificationResponse.from(notificationService.markAsRead(user, id));
     }
 
@@ -44,7 +44,7 @@ public class NotificationController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public ResponseEntity<Void> delete(@AuthenticationPrincipal User user, @PathVariable String id) {
         notificationService.delete(user, id);
         return ResponseEntity.noContent().build();
     }

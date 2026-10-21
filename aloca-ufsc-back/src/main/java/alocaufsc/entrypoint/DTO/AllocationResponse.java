@@ -4,9 +4,9 @@ import alocaufsc.domain.allocationsystem.AllocationStatus;
 
 import java.time.LocalDateTime;
 
-public record AllocationResponse(Long id, AllocationStatus status,
+public record AllocationResponse(String id, AllocationStatus status,
                                  String venueId, String venueName, String venueLocation,
-                                 Long eventId, String eventTitle,
+                                 String eventId, String eventTitle,
                                  String requesterId, String requesterName,
                                  LocalDateTime start, LocalDateTime end,
                                  LocalDateTime createdAt, LocalDateTime reviewedAt, String rejectionReason) {}

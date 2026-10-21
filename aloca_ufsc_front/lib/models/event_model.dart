@@ -1,7 +1,7 @@
 enum EventStatus { noVenue, pending, active, suspended, cancelled }
 
 class Event {
-  final int? id;
+  final String? id;
   final String title;
   final String description;
   final DateTime start;

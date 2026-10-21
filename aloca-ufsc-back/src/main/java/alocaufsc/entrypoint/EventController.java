@@ -37,7 +37,7 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.getEvent(user, id);
         return EventResponse.from(event);
     }
@@ -50,27 +50,32 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    public EventResponse editEvent(@AuthenticationPrincipal User user, @PathVariable Long id, @RequestBody EventRequest request) {
+    public EventResponse editEvent(@AuthenticationPrincipal User user, @PathVariable String id, @RequestBody EventRequest request) {
         Event event = eventService.editEvent(user, id, toInfoEvent(request));
         return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/cancel")
-    public EventResponse cancelEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse cancelEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.cancelEvent(user, id);
         return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/suspend")
-    public EventResponse suspendEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse suspendEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.suspendEvent(user, id);
         return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/reactivate")
-    public EventResponse reactivateEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse reactivateEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.reactivateEvent(user, id);
         return EventResponse.from(event);
+    }
+
+    @GetMapping("/eligible-events")
+    public List<EventResponse> eligibleEvents(@AuthenticationPrincipal User user) {
+        return (eventService.getEligibleEvents(user).stream().map(EventResponse::from).toList());
     }
 
     private InfoEvent toInfoEvent(EventRequest request) {

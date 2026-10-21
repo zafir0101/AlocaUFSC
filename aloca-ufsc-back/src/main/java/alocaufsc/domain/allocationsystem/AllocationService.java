@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
 public class AllocationService {
@@ -37,14 +38,6 @@ public class AllocationService {
                 .toList();
     }
 
-    public List<Event> getEligibleEvents(User user) {
-        ensureUser(user);
-        return facadeDb.findEventsByCreator(user).stream()
-                .filter(this::isAllocatable)
-                .filter(e -> !hasOpenAllocation(e.getId()))
-                .toList();
-    }
-
     public synchronized Allocation createAllocation(User user, AllocationInfo info) {
         ensureUser(user);
         if (info == null || info.eventId() == null) {
@@ -60,16 +53,13 @@ public class AllocationService {
         if (!event.getCreator().getId().equals(user.getId())) {
             throw new SecurityException("Você só pode solicitar alocação para eventos criados por você.");
         }
-        if (!isAllocatable(event)) {
+        if (!event.isAllocatable()) {
             throw new IllegalArgumentException("Este evento não pode receber uma alocação no status atual.");
-        }
-        if (hasOpenAllocation(event.getId())) {
-            throw new IllegalArgumentException("Este evento já possui um pedido de alocação pendente ou aprovado.");
         }
 
         Venue venue = requireAvailableVenue(user, info.venueId(), info.start(), info.end(), null);
 
-        Allocation allocation = new Allocation(null, venue, event, user, info.start(), info.end(),
+        Allocation allocation = new Allocation(UUID.randomUUID().toString(), venue, event, user, info.start(), info.end(),
                 AllocationStatus.PENDING, LocalDateTime.now());
 
         event.setStatus(EventStatus.AGUARDANDO_APROVACAO);
@@ -78,7 +68,7 @@ public class AllocationService {
         return facadeDb.saveAllocation(allocation);
     }
 
-    public synchronized Allocation updateAllocation(User user, Long id, AllocationInfo newData) {
+    public synchronized Allocation updateAllocation(User user, String id, AllocationInfo newData) {
         ensureUser(user);
         Allocation allocation = getAllocationEntity(id);
         if (!allocation.getRequester().getId().equals(user.getId())) {
@@ -116,7 +106,7 @@ public class AllocationService {
                 .toList();
     }
 
-    public Allocation getAllocation(User user, Long id) {
+    public Allocation getAllocation(User user, String id) {
         ensureUser(user);
         Allocation allocation = getAllocationEntity(id);
         if (user.getEntity() != Entity.MANAGER && !allocation.getRequester().getId().equals(user.getId())) {
@@ -126,7 +116,6 @@ public class AllocationService {
     }
 
     public List<Allocation> getAllocationByStatus(User admin, AllocationStatus status) {
-        ensureAdmin(admin);
         if (status == null) {
             throw new IllegalArgumentException("Informe o status.");
         }
@@ -135,8 +124,7 @@ public class AllocationService {
                 .toList();
     }
 
-    public synchronized Allocation approveAllocation(User admin, Long id) {
-        ensureAdmin(admin);
+    public synchronized Allocation approveAllocation(User admin, String id) {
         Allocation allocation = getAllocationEntity(id);
         ensurePending(allocation);
 
@@ -160,11 +148,11 @@ public class AllocationService {
                 "Seu pedido de alocação do evento \"" + event.getTitle() + "\" foi aprovado: "
                         + saved.getVenue().getName() + " (" + saved.getVenue().getLocation() + "), "
                         + saved.getStart().format(FMT) + " a " + saved.getEnd().format(FMT) + ".");
+
         return saved;
     }
 
-    public synchronized Allocation rejectAllocation(User admin, Long id, String reason) {
-        ensureAdmin(admin);
+    public synchronized Allocation rejectAllocation(User admin, String id, String reason) {
         if (reason != null && reason.trim().length() > MAX_REJECTION_REASON_LENGTH) {
             throw new IllegalArgumentException("O motivo deve ter no máximo " + MAX_REJECTION_REASON_LENGTH + " caracteres.");
         }
@@ -190,13 +178,13 @@ public class AllocationService {
         return saved;
     }
 
-    private Allocation getAllocationEntity(Long id) {
+    private Allocation getAllocationEntity(String id) {
         return facadeDb.findAllocation(id)
                 .orElseThrow(() -> new NoSuchElementException("Pedido de alocação não encontrado."));
     }
 
     private Venue requireAvailableVenue(User user, String venueId, LocalDateTime start, LocalDateTime end,
-                                        Long ignoreAllocationId) {
+                                        String ignoreAllocationId) {
         Venue venue = facadeDb.findAvailableVenues(start, end, ignoreAllocationId).stream()
                 .filter(v -> v.getId().equals(venueId))
                 .findFirst()
@@ -205,15 +193,6 @@ public class AllocationService {
             throw new SecurityException("Seu perfil não pode utilizar este espaço.");
         }
         return venue;
-    }
-
-    private boolean isAllocatable(Event event) {
-        return event.getStatus() == EventStatus.SEM_ESPACO;
-    }
-
-    private boolean hasOpenAllocation(Long eventId) {
-        return facadeDb.findAllocationsByEvent(eventId).stream()
-                .anyMatch(a -> a.getStatus() == AllocationStatus.PENDING || a.getStatus() == AllocationStatus.APPROVED);
     }
 
     private void ensurePending(Allocation allocation) {
@@ -235,19 +214,13 @@ public class AllocationService {
     }
 
     private void notifyRequester(Allocation allocation, NotificationType type, String message) {
-        facadeDb.saveNotification(new Notification(null, allocation.getRequester(), type, message,
+        facadeDb.saveNotification(new Notification(UUID.randomUUID().toString(), allocation.getRequester(), type, message,
                 allocation.getEvent().getId(), LocalDateTime.now(), false));
     }
 
     private void ensureUser(User user) {
         if (user == null) {
             throw new SecurityException("Usuário não autenticado.");
-        }
-    }
-
-    private void ensureAdmin(User user) {
-        if (user == null || user.getEntity() != Entity.MANAGER) {
-            throw new SecurityException("Apenas administradores podem analisar pedidos de alocação.");
         }
     }
 }

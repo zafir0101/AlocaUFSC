@@ -2,10 +2,8 @@ package alocaufsc.domain.mappers;
 
 import alocaufsc.domain.allocationsystem.Allocation;
 import alocaufsc.domain.allocationsystem.AllocationInfo;
-import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.entrypoint.DTO.AllocationRequest;
 import alocaufsc.entrypoint.DTO.AllocationResponse;
-import alocaufsc.entrypoint.DTO.EventOptionResponse;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,13 +28,5 @@ public class AllocationMapper {
 
     public List<AllocationResponse> toResponseList(List<Allocation> allocations) {
         return allocations.stream().map(this::toResponse).toList();
-    }
-
-    public EventOptionResponse toEventOption(Event e) {
-        return new EventOptionResponse(e.getId(), e.getTitle(), String.valueOf(e.getStatus()));
-    }
-
-    public List<EventOptionResponse> toEventOptionList(List<Event> events) {
-        return events.stream().map(this::toEventOption).toList();
     }
 }

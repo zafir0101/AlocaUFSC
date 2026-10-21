@@ -19,11 +19,11 @@ class _VenueScreenState extends State<VenueScreen> {
   @override
   void initState() {
     super.initState();
-    _venuesFuture = appState.fetchVenues();
+    _venuesFuture = appState.fetchVenuesWithFilter();
   }
 
   Future<void> _refreshVenues() async {
-    final future = appState.fetchVenues();
+    final future = appState.fetchVenuesWithFilter();
     setState(() {
       _venuesFuture = future;
     });
@@ -98,7 +98,7 @@ class _VenueScreenState extends State<VenueScreen> {
                 final venues = result.data ?? [];
 
                 if (venues.isEmpty) {
-                  return const Center(child: Text('Nenhum espaço cadastrado.'));
+                  return const Center(child: Text('Nenhum espaço disponível.'));
                 }
 
                 return RefreshIndicator(

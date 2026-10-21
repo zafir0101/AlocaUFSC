@@ -5,17 +5,17 @@ import alocaufsc.domain.entities.User;
 import java.time.LocalDateTime;
 
 public class Notification {
-    private Long id;
+    private String id;
     private User recipient;
     private NotificationType type;
     private String message;
-    private Long eventId;
+    private String eventId;
     private LocalDateTime createdAt;
     private boolean read;
 
     public Notification() {}
 
-    public Notification(Long id, User recipient, NotificationType type, String message, Long eventId,
+    public Notification(String id, User recipient, NotificationType type, String message, String eventId,
                         LocalDateTime createdAt, boolean read) {
         this.id = id;
         this.recipient = recipient;
@@ -30,16 +30,16 @@ public class Notification {
         return recipient != null && user != null && recipient.getId().equals(user.getId());
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
     public User getRecipient() { return recipient; }
     public void setRecipient(User recipient) { this.recipient = recipient; }
     public NotificationType getType() { return type; }
     public void setType(NotificationType type) { this.type = type; }
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
-    public Long getEventId() { return eventId; }
-    public void setEventId(Long eventId) { this.eventId = eventId; }
+    public String getEventId() { return eventId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public boolean isRead() { return read; }

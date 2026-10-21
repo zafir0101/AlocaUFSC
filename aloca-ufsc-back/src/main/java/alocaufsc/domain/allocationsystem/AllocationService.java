@@ -63,6 +63,7 @@ public class AllocationService {
                 AllocationStatus.PENDING, LocalDateTime.now());
 
         event.setStatus(EventStatus.AGUARDANDO_APROVACAO);
+        event.setVenue(venue);
         facadeDb.saveEvent(event);
 
         return facadeDb.saveAllocation(allocation);
@@ -142,6 +143,7 @@ public class AllocationService {
 
         Event event = saved.getEvent();
         event.setStatus(EventStatus.ATIVO);
+        event.setVenue(allocation.getVenue());
         facadeDb.saveEvent(event);
 
         notifyRequester(saved, NotificationType.ALOCACAO_APROVADA,
@@ -167,6 +169,7 @@ public class AllocationService {
 
         Event event = saved.getEvent();
         event.setStatus(EventStatus.SEM_ESPACO);
+        event.setVenue(null);
         facadeDb.saveEvent(event);
 
         String msg = "Seu pedido de alocação do evento \"" + event.getTitle() + "\" em "

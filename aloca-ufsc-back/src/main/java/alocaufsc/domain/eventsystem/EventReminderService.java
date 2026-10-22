@@ -41,7 +41,7 @@ public class EventReminderService {
         LocalDateTime start = event.getPeriod().start();
         if (!start.isAfter(now)) return;
 
-        EventStatus eventStatus = eventService.getEventStatus(event);
+        EventStatus eventStatus = event.getStatus();
         if (eventStatus == EventStatus.ATIVO) return;
 
         String situation = eventStatus == EventStatus.AGUARDANDO_APROVACAO

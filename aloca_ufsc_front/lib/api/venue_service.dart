@@ -42,6 +42,19 @@ ApiRequest<List<Venue>> fetchVenues(AccessToken accessToken) async {
   throw Exception(_extractMessage(response));
 }
 
+ApiRequest<List<Venue>> fetchVenuesWithFilter(AccessToken accessToken) async {
+  final response = await http.get(Uri.parse("$baseUrl/filter"), headers: _getHeaders(accessToken));
+  if (response.statusCode == 200) {
+    final List<dynamic> body = _decode(response);
+    return Result.ok(body.map((json) => Venue.fromJson(json)).toList());
+  }
+  
+  final sessionError = _checkSessionError(response.statusCode);
+  if (sessionError != null) return Result.error(sessionError);
+  
+  throw Exception(_extractMessage(response));
+}
+
 ApiRequest<List<CampusCenter>> fetchCampus(AccessToken accessToken) async {
   final response = await http.get(Uri.parse('$baseUrl/campus'), headers: _getHeaders(accessToken));
   if (response.statusCode == 200) {

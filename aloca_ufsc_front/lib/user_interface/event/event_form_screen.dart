@@ -150,7 +150,6 @@ class _EventFormScreenState extends State<EventFormScreen> {
     setState(() => _loading = true);
 
     final event = Event(
-      id: widget.event?.id,
       title: _titleController.text.trim(),
       description: _descriptionController.text.trim(),
       start: _start!,
@@ -165,7 +164,6 @@ class _EventFormScreenState extends State<EventFormScreen> {
       if (!mounted) return;
       setState(() => _loading = false);
 
-      // Checa se o erro retornado é do tipo DuplicateEventError configurado no event_service
       if (result.error is DuplicateEventError) {
         await _showDuplicateDialog(result.error as DuplicateEventError);
       } else {

@@ -50,24 +50,20 @@ class _VenueAdminScreenState extends State<VenueAdminScreen> {
     });
     
     try {
-      // Dispara as duas chamadas simultaneamente
       final venuesFuture = appState.fetchVenues();
       final campusFuture = appState.fetchCampus();
       
-      // Aguarda o resultado das duas
       final venuesResult = await venuesFuture;
       final campusResult = await campusFuture;
       
       if (!mounted) return;
       
       setState(() {
-        // Valida se alguma retornou erro no padrão Result
         if (venuesResult.isError) {
           _error = venuesResult.error.toString().replaceFirst('Exception: ', '');
         } else if (campusResult.isError) {
           _error = campusResult.error.toString().replaceFirst('Exception: ', '');
         } else {
-          // Extrai os dados em caso de sucesso
           _venues = venuesResult.data ?? [];
           _campus = campusResult.data ?? [];
         }
@@ -119,7 +115,7 @@ class _VenueAdminScreenState extends State<VenueAdminScreen> {
   }
 
   Future<void> _openForm({Venue? venue}) async {
-    final saved = await Navigator.of(context).push<Venue>(MaterialPageRoute(
+    final saved = await Navigator.of(context, rootNavigator: true).push<Venue>(MaterialPageRoute(
       builder: (context) => VenueFormScreen(
         venue: venue,
         initialCenter: widget.centerCode,

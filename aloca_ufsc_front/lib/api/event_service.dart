@@ -7,7 +7,7 @@ import 'package:aloca_ufsc_front/models/api_model.dart';
 
 class DuplicateEventError {
   final String message;
-  final int existingEventId;
+  final String existingEventId;
 
   DuplicateEventError(this.message, this.existingEventId);
 
@@ -44,7 +44,7 @@ ApiRequest<List<Event>> fetchMyEvents(AccessToken accessToken) async {
     return Result.error(_parseError(response.statusCode));
 }
 
-ApiRequest<Event> fetchEvent(int id, AccessToken accessToken) async {
+ApiRequest<Event> fetchEvent(String id, AccessToken accessToken) async {
     final response = await http.get(
         Uri.parse('$baseUrl/$id'), 
         headers: _getHeaders(accessToken)
@@ -52,6 +52,20 @@ ApiRequest<Event> fetchEvent(int id, AccessToken accessToken) async {
 
     if (response.statusCode == 200) {
       return Result.ok(Event.fromJson(_decode(response)));
+    }
+
+    return Result.error(_parseError(response.statusCode));
+}
+
+ApiRequest<List<Event>> fetchEventByStatus(String status, AccessToken accessToken) async {
+    final response = await http.get(
+        Uri.parse('$baseUrl/status/$status'), 
+        headers: _getHeaders(accessToken)
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> body = _decode(response);
+      return Result.ok(body.map((json) => Event.fromJson(json)).toList());
     }
 
     return Result.error(_parseError(response.statusCode));
@@ -71,7 +85,7 @@ ApiRequest<Event> createEvent(Event event, AccessToken accessToken) async {
     return Result.error(_parseError(response.statusCode));
 }
 
-ApiRequest<Event> updateEvent(int id, Event event, AccessToken accessToken) async {
+ApiRequest<Event> updateEvent(String id, Event event, AccessToken accessToken) async {
     final response = await http.put(
         Uri.parse('$baseUrl/$id'),
         headers: _getHeaders(accessToken),
@@ -85,7 +99,7 @@ ApiRequest<Event> updateEvent(int id, Event event, AccessToken accessToken) asyn
     return Result.error(_parseError(response.statusCode));
 }
 
-ApiRequest<Event> cancelEvent(int id, AccessToken accessToken) async {
+ApiRequest<Event> cancelEvent(String id, AccessToken accessToken) async {
     final response = await http.patch(
         Uri.parse('$baseUrl/$id/cancel'), 
         headers: _getHeaders(accessToken)
@@ -98,7 +112,7 @@ ApiRequest<Event> cancelEvent(int id, AccessToken accessToken) async {
     return Result.error(_parseError(response.statusCode));
 }
 
-ApiRequest<Event> suspendEvent(int id, AccessToken accessToken) async {
+ApiRequest<Event> suspendEvent(String id, AccessToken accessToken) async {
     final response = await http.patch(
         Uri.parse('$baseUrl/$id/suspend'), 
         headers: _getHeaders(accessToken)
@@ -111,7 +125,7 @@ ApiRequest<Event> suspendEvent(int id, AccessToken accessToken) async {
     return Result.error(_parseError(response.statusCode));
 }
 
-ApiRequest<Event> reactivateEvent(int id, AccessToken accessToken) async {
+ApiRequest<Event> reactivateEvent(String id, AccessToken accessToken) async {
     final response = await http.patch(
         Uri.parse('$baseUrl/$id/reactivate'), 
         headers: _getHeaders(accessToken)
@@ -122,4 +136,19 @@ ApiRequest<Event> reactivateEvent(int id, AccessToken accessToken) async {
     }
 
     return Result.error(_parseError(response.statusCode));
+}
+
+ApiRequest<List<Event>> fetchEligibleEvents(AccessToken accessToken) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/eligible-events'),
+    headers: _getHeaders(accessToken),
+  );
+
+  if (response.statusCode == 200) {
+    final List<dynamic> body = _decode(response);
+    return Result.ok(body.map<Event>((json) => Event.fromJson(json)).toList());
+  }
+
+  final sessionError = _parseError(response.statusCode);
+  return Result.error(sessionError);
 }

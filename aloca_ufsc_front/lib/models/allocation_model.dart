@@ -1,9 +1,10 @@
-enum AllocationStatus { pending, approved, rejected }
+enum AllocationStatus { pending, approved, rejected, canceled }
 
 AllocationStatus _parseStatus(String status) {
     switch (status.toUpperCase()) {
         case 'APPROVED': return AllocationStatus.approved;
         case 'REJECTED': return AllocationStatus.rejected;
+        case 'CANCELED': return AllocationStatus.canceled;
         default: return AllocationStatus.pending;
     }
 }
@@ -14,8 +15,6 @@ class Allocation {
     final String venueId;
     final String venueName;
     final String venueLocation;
-    final String eventId;
-    final String eventTitle;
     final String requesterId;
     final String requesterName;
     final DateTime start;
@@ -30,8 +29,6 @@ class Allocation {
         required this.venueId,
         required this.venueName,
         required this.venueLocation,
-        required this.eventId,
-        required this.eventTitle,
         required this.requesterId,
         required this.requesterName,
         required this.start,
@@ -48,8 +45,6 @@ class Allocation {
             venueId: json['venueId'],
             venueName: json['venueName'],
             venueLocation: json['venueLocation'],
-            eventId: json['eventId'],
-            eventTitle: json['eventTitle'],
             requesterId: json['requesterId'],
             requesterName: json['requesterName'],
             start: DateTime.parse(json['start']),

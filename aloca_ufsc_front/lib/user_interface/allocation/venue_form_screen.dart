@@ -94,7 +94,6 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
   }
 
   Iterable<String> _buildingOptions(String typed) {
-    // 3. CORREÇÃO: Uso de .where().firstOrNull para Iterables (requer Dart 3)
     final center = _campus.where((c) => c.code == _center).firstOrNull;
     if (center == null) return const [];
     final query = _normalize(typed);

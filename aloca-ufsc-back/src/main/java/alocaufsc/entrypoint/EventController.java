@@ -2,10 +2,7 @@ package alocaufsc.entrypoint;
 
 import alocaufsc.domain.Period;
 import alocaufsc.domain.entities.User;
-import alocaufsc.domain.eventsystem.DuplicateEventException;
-import alocaufsc.domain.eventsystem.Event;
-import alocaufsc.domain.eventsystem.EventService;
-import alocaufsc.domain.eventsystem.InfoEvent;
+import alocaufsc.domain.eventsystem.*;
 import alocaufsc.entrypoint.DTO.EventRequest;
 import alocaufsc.entrypoint.DTO.EventResponse;
 import org.springframework.http.HttpStatus;
@@ -40,6 +37,13 @@ public class EventController {
     public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.getEvent(user, id);
         return EventResponse.from(event);
+    }
+
+    @GetMapping("/status/{status}")
+    public List<EventResponse> getEventsByStatus(@PathVariable EventStatus status) {
+        return eventService.getEventsByStatus(status).stream()
+                .map(event -> EventResponse.from(event))
+                .toList();
     }
 
     @PostMapping
@@ -78,11 +82,11 @@ public class EventController {
         return (eventService.getEligibleEvents(user).stream().map(EventResponse::from).toList());
     }
 
-    private InfoEvent toInfoEvent(EventRequest request) {
+    private EventInfo toInfoEvent(EventRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Os dados do evento não podem ser nulos.");
         }
-        return new InfoEvent(request.title(), request.description(), new Period(request.start(), request.end()), null);
+        return new EventInfo(request.title(), request.description(), new Period(request.start(), request.end()), null);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

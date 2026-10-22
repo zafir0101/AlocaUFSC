@@ -167,6 +167,10 @@ class AppState {
         return _withAccessToken((accessToken) => eventService.fetchEvent(id, accessToken));
     }
 
+    ApiRequest<List<Event>> fetchEventsByStatus(String status) async {
+        return _withAccessToken((accessToken) => eventService.fetchEventByStatus(status, accessToken));
+    }
+
     ApiRequest<Event> createEvent(Event event) async {
         return _withAccessToken((accessToken) => eventService.createEvent(event, accessToken));
     }
@@ -214,7 +218,6 @@ class AppState {
     ApiRequest<void> deleteReadNotifications() async {
         return _withAccessToken((accessToken) => notificationService.deleteRead(accessToken));
     }
-
 
     ApiRequest<Allocation> createAllocation(String eventId, String venueId, DateTime start, DateTime end) async {
         return _withAccessToken((accessToken) => allocationService.createAllocation(eventId, venueId, start, end, accessToken));

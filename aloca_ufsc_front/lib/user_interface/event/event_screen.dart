@@ -262,7 +262,8 @@ class _EventCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 _InfoRow(
                   icon: Icons.place_outlined,
-                  text: event.status == EventStatus.active
+                  text: event.status == EventStatus.active ||
+                                    event.status == EventStatus.cancelled || event.status == EventStatus.pending
                       ? (event.venueName ?? 'Espaço alocado')
                       : 'Local a definir',
                 ),

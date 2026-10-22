@@ -2,9 +2,8 @@ package alocaufsc.domain.eventsystem;
 
 import alocaufsc.domain.Period;
 import alocaufsc.domain.allocationsystem.Allocation;
-import alocaufsc.domain.allocationsystem.AllocationStatus;
-import alocaufsc.domain.allocationsystem.Venue;
 import alocaufsc.domain.entities.User;
+
 
 public class Event {
     private String id;
@@ -12,18 +11,19 @@ public class Event {
     private String description;
     private Period period;
     private EventStatus status;
-    private Venue venue;
+    private Allocation allocation;
     private User creator;
 
     public Event() {}
 
-    public Event(String id, String title, String description, Period period, EventStatus status, Venue venue, User creator) {
+    public Event(String id, String title, String description, Period period, EventStatus status, Allocation allocation,
+                 User creator) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.period = period;
         this.status = status;
-        this.venue = venue;
+        this.allocation = allocation;
         this.creator = creator;
     }
 
@@ -41,15 +41,8 @@ public class Event {
     public void setPeriod(Period period) { this.period = period; }
     public EventStatus getStatus() { return status; }
     public void setStatus(EventStatus status) { this.status = status; }
-    public void setStatusWithAllocationStatus(AllocationStatus allocationStatus) {
-        switch (allocationStatus) {
-            case AllocationStatus.APPROVED -> this.status = EventStatus.ATIVO;
-            case AllocationStatus.REJECTED -> this.status = EventStatus.SEM_ESPACO;
-            case AllocationStatus.PENDING -> this.status = EventStatus.AGUARDANDO_APROVACAO;
-        }
-    }
-    public Venue getVenue() { return venue; }
-    public void setVenue(Venue venue) { this.venue = venue; }
+    public Allocation getAllocation() { return this.allocation; }
+    public void setAllocation(Allocation allocation) { this.allocation = allocation; }
     public User getCreator() { return creator; }
     public void setCreator(User creator) { this.creator = creator; }
     public boolean isAllocatable() { return this.status == EventStatus.SEM_ESPACO; }

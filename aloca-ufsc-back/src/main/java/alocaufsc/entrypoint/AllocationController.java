@@ -45,12 +45,6 @@ public class AllocationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(mapper.toResponse(created));
     }
 
-    @PutMapping("/{id}")
-    public AllocationResponse update(@AuthenticationPrincipal User user, @PathVariable String id,
-                                     @RequestBody AllocationRequest request) {
-        return mapper.toResponse(allocationService.updateAllocation(user, id, mapper.toInfo(request)));
-    }
-
     @GetMapping("/mine")
     public List<AllocationResponse> mine(@AuthenticationPrincipal User user) {
         return mapper.toResponseList(allocationService.getMyAllocations(user));

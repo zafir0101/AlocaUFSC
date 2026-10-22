@@ -57,6 +57,20 @@ ApiRequest<Event> fetchEvent(String id, AccessToken accessToken) async {
     return Result.error(_parseError(response.statusCode));
 }
 
+ApiRequest<List<Event>> fetchEventByStatus(String status, AccessToken accessToken) async {
+    final response = await http.get(
+        Uri.parse('$baseUrl/status/$status'), 
+        headers: _getHeaders(accessToken)
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> body = _decode(response);
+      return Result.ok(body.map((json) => Event.fromJson(json)).toList());
+    }
+
+    return Result.error(_parseError(response.statusCode));
+}
+
 ApiRequest<Event> createEvent(Event event, AccessToken accessToken) async {
     final response = await http.post(
         Uri.parse(baseUrl),

@@ -1,7 +1,8 @@
 package alocaufsc.domain.eventsystem;
 
 import alocaufsc.domain.Period;
-import alocaufsc.domain.allocationsystem.Allocation;
+import alocaufsc.domain.allocationsystem.AllocationInfo;
+import alocaufsc.domain.allocationsystem.AllocationService;
 import alocaufsc.domain.allocationsystem.AllocationStatus;
 import alocaufsc.domain.entities.User;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
@@ -18,13 +19,15 @@ public class EventService {
     public static final int MAX_TITLE_LENGTH = 100;
     public static final int MAX_DESCRIPTION_LENGTH = 1000;
 
+    private final AllocationService allocationService;
     private final FacadeDbRest facadeDbRest;
 
-    public EventService(FacadeDbRest facadeDbRest) {
+    public EventService(FacadeDbRest facadeDbRest, AllocationService allocationService) {
         this.facadeDbRest = facadeDbRest;
+        this.allocationService = allocationService;
     }
 
-    public Event createEvent(User u, InfoEvent ie) {
+    public Event createEvent(User u, EventInfo ie) {
         validate(ie);
         if (ie.period().start().isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("O evento não pode começar no passado.");
@@ -32,7 +35,7 @@ public class EventService {
         checkDuplicate(u, null, ie);
 
         Event event = new Event(UUID.randomUUID().toString(), ie.title().trim(), ie.description(), ie.period(),
-                EventStatus.SEM_ESPACO, ie.venue(), u);
+                EventStatus.SEM_ESPACO, null, u);
         return facadeDbRest.saveEvent(event);
     }
 
@@ -43,11 +46,18 @@ public class EventService {
                 .toList();
     }
 
+    public List<Event> getEventsByStatus(EventStatus status) {
+        return facadeDbRest.findAllEvents().stream()
+                .filter(e -> e.getStatus() == status)
+                .sorted(Comparator.comparing(e -> e.getPeriod().start()))
+                .toList();
+    }
+
     public Event getEvent(User u, String eventId) {
         return getOwnedEvent(u, eventId);
     }
 
-    public Event editEvent(User u, String eventId, InfoEvent newData) {
+    public Event editEvent(User u, String eventId, EventInfo newInfoEvent) {
         Event event = getOwnedEvent(u, eventId);
         if (event.getStatus() == EventStatus.CANCELADO) {
             throw new IllegalArgumentException("Não é possível editar um evento cancelado.");
@@ -55,25 +65,29 @@ public class EventService {
         if (event.getStatus() == EventStatus.ATIVO) {
             ensureNotEnded(event, "Não é possível editar um evento que já passou.");
         }
-        validate(newData);
+        validate(newInfoEvent);
 
         LocalDateTime now = LocalDateTime.now();
-        boolean startChanged = !newData.period().start().equals(event.getPeriod().start());
-        boolean endChanged = !newData.period().end().equals(event.getPeriod().end());
-        if (startChanged && newData.period().start().isBefore(now)) {
+        boolean startChanged = !newInfoEvent.period().start().equals(event.getPeriod().start());
+        boolean endChanged = !newInfoEvent.period().end().equals(event.getPeriod().end());
+        if (startChanged && newInfoEvent.period().start().isBefore(now)) {
             throw new IllegalArgumentException("O evento não pode ser remarcado para uma data que já passou.");
         }
-        if (endChanged && !newData.period().end().isAfter(now)) {
+        if (endChanged && !newInfoEvent.period().end().isAfter(now)) {
             throw new IllegalArgumentException("O fim do evento não pode estar no passado.");
         }
-        checkDuplicate(u, eventId, newData);
+        checkDuplicate(u, eventId, newInfoEvent);
 
-        event.setTitle(newData.title().trim());
-        event.setDescription(newData.description());
-        event.setPeriod(newData.period());
-        if (newData.venue() != null) {
-            event.setVenue(newData.venue());
-        }
+        event.setTitle(newInfoEvent.title().trim());
+        event.setDescription(newInfoEvent.description());
+        event.setPeriod(newInfoEvent.period());
+
+        if (!startChanged && !endChanged) return facadeDbRest.saveEvent(event);
+
+        AllocationInfo newAllocationInfo = new AllocationInfo(event.getId(), event.getAllocation().getVenue().getName(),
+                event.getPeriod().start(), event.getPeriod().end());
+        allocationService.updateAllocation(u, event.getAllocation(), newAllocationInfo);
+
         return facadeDbRest.saveEvent(event);
     }
 
@@ -85,6 +99,12 @@ public class EventService {
         ensureNotEnded(event, "Não é possível suspender um evento que já passou.");
 
         event.setStatus(EventStatus.SUSPENSO);
+        event.getAllocation().setStatus(AllocationStatus.CANCELED);
+
+        facadeDbRest.saveAllocation(event.getAllocation());
+
+        event.setAllocation(null);
+
         return facadeDbRest.saveEvent(event);
     }
 
@@ -95,7 +115,7 @@ public class EventService {
         }
         ensureNotEnded(event, "A data deste evento já passou. Altere para uma data futura antes de reativar.");
 
-        event.setStatus(EventStatus.ATIVO);
+        event.setStatus(EventStatus.SEM_ESPACO);
         return facadeDbRest.saveEvent(event);
     }
 
@@ -109,6 +129,10 @@ public class EventService {
         }
 
         event.setStatus(EventStatus.CANCELADO);
+        event.getAllocation().setStatus(AllocationStatus.CANCELED);
+
+        facadeDbRest.saveAllocation(event.getAllocation());
+
         return facadeDbRest.saveEvent(event);
     }
 
@@ -117,18 +141,6 @@ public class EventService {
         return facadeDbRest.findEventsByCreator(user).stream()
                 .filter(Event::isAllocatable)
                 .toList();
-    }
-
-    public EventStatus getEventStatus(Event event) {
-        List<Allocation> allocations = facadeDbRest.findAllocationsByEvent(event.getId());
-
-        if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.APPROVED)) {
-            return EventStatus.ATIVO;
-        }
-        if (allocations.stream().anyMatch(a -> a.getStatus() == AllocationStatus.PENDING)) {
-            return EventStatus.AGUARDANDO_APROVACAO;
-        }
-        return EventStatus.SEM_ESPACO;
     }
 
     private Event getOwnedEvent(User u, String eventId) {
@@ -146,7 +158,7 @@ public class EventService {
         }
     }
 
-    private void validate(InfoEvent ie) {
+    private void validate(EventInfo ie) {
         if (ie == null) {
             throw new IllegalArgumentException("Os dados do evento não podem ser nulos.");
         }
@@ -164,7 +176,7 @@ public class EventService {
         }
     }
 
-    private void checkDuplicate(User u, String ignoredEventId, InfoEvent ie) {
+    private void checkDuplicate(User u, String ignoredEventId, EventInfo ie) {
         String title = ie.title().trim();
         facadeDbRest.findEventsByCreator(u).stream()
                 .filter(e -> !e.getId().equals(ignoredEventId))

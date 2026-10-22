@@ -125,10 +125,6 @@ public class FacadeDbRest {
         return mockData.findAllocationsByRequesterId(requester.getId());
     }
 
-    public List<Allocation> findAllocationsByEvent(String eventId) {
-        return mockData.findAllocationsByEventId(eventId);
-    }
-
     public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, String ignoreAllocationId) {
         return mockData.findAvailableVenues(start, end, ignoreAllocationId);
     }

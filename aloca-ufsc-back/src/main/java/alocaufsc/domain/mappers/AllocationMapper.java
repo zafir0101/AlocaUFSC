@@ -20,7 +20,6 @@ public class AllocationMapper {
         return new AllocationResponse(
                 a.getId(), a.getStatus(),
                 a.getVenue().getId(), a.getVenue().getName(), a.getVenue().getLocation(),
-                a.getEvent().getId(), a.getEvent().getTitle(),
                 a.getRequester().getId(), a.getRequester().getFullName(),
                 a.getStart(), a.getEnd(),
                 a.getCreatedAt(), a.getReviewedAt(), a.getRejectionReason());

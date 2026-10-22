@@ -1,5 +1,5 @@
+import 'package:aloca_ufsc_front/models/event_model.dart';
 import 'package:flutter/material.dart';
-import '../../../models/allocation_model.dart';
 import '../../../main.dart';
 import '../../../theme.dart';
 
@@ -12,7 +12,7 @@ class AdminAllocationsTab extends StatefulWidget {
 
 class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
   bool _loading = true;
-  List<Allocation> _requests = [];
+  List<Event> _requests = [];
 
   @override
   void initState() {
@@ -22,8 +22,7 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
 
   Future<void> _loadRequests() async {
     setState(() => _loading = true);
-    final result = await appState.fetchAllocationsByStatus('PENDING'); 
-    
+    final result = await appState.fetchEventsByStatus('AGUARDANDO_APROVACAO'); 
     if (mounted) {
       setState(() {
         if (!result.isError) _requests = result.data ?? [];
@@ -32,9 +31,8 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
     }
   }
 
-  Future<void> _handleAction(Allocation request, bool approve) async {
+  Future<void> _handleAction(Event request, bool approve) async {
     String reason = '';
-    
     if (!approve) {
       final inputReason = await showDialog<String>(
         context: context,
@@ -61,8 +59,8 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
     setState(() => _loading = true);
     try {
       final res = approve 
-        ? await appState.approveAllocation(request.id) 
-        : await appState.rejectAllocation(request.id, reason);
+        ? await appState.approveAllocation(request.allocationId!) 
+        : await appState.rejectAllocation(request.allocationId!, reason);
         
       if (res.isError) throw Exception("Erro na API.");
       
@@ -103,7 +101,7 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(req.eventTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text(req.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   Text('Espaço: ${req.venueName}'),
                   Text('Requerente: ${req.requesterName}'),

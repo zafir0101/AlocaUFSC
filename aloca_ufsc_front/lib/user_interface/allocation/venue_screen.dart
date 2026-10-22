@@ -113,7 +113,7 @@ class _VenueScreenState extends State<VenueScreen> {
                       return InkWell(
                         borderRadius: BorderRadius.circular(8),
                         onTap: () {
-                          Navigator.of(context).push(
+                          Navigator.of(context, rootNavigator: true).push(
                             MaterialPageRoute(
                               builder: (context) => AllocationFormScreen(venue: item),
                             ),

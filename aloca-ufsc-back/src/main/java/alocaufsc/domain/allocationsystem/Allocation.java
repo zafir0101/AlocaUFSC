@@ -5,11 +5,11 @@ import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.Event;
 
 import java.time.LocalDateTime;
+import java.util.Observer;
 
 public class Allocation {
     private String id;
     private Venue venue;
-    private Event event;
     private User requester;
     private LocalDateTime start;
     private LocalDateTime end;
@@ -21,11 +21,10 @@ public class Allocation {
 
     public Allocation() {}
 
-    public Allocation(String id, Venue venue, Event event, User requester, LocalDateTime start, LocalDateTime end,
+    public Allocation(String id, Venue venue, User requester, LocalDateTime start, LocalDateTime end,
                       AllocationStatus status, LocalDateTime createdAt) {
         this.id = id;
         this.venue = venue;
-        this.event = event;
         this.requester = requester;
         this.start = start;
         this.end = end;
@@ -48,7 +47,6 @@ public class Allocation {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public Venue getVenue() { return venue; }
-    public Event getEvent() { return event; }
     public User getRequester() { return requester; }
     public LocalDateTime getStart() { return start; }
     public LocalDateTime getEnd() { return end; }

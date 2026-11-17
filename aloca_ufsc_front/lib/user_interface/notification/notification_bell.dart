@@ -32,7 +32,7 @@ class _NotificationBellState extends State<NotificationBell> {
   }
 
   Future<void> _open() async {
-    await Navigator.of(context).push(
+    await Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(builder: (context) => const NotificationScreen()),
     );
     _loadUnread();

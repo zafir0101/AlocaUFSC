@@ -168,7 +168,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   String _venueText() {
-    if (_event.status == EventStatus.active) {
+    if (_event.status == EventStatus.active || _event.status == EventStatus.cancelled) {
       return _event.venueName != null && _event.venueName!.isNotEmpty
           ? _event.venueName!
           : 'Espaço alocado';

@@ -32,7 +32,7 @@ ApiRequest<int> fetchUnreadCount(AccessToken accessToken) async {
   return Result.error(_parseError(response.statusCode));
 }
 
-ApiRequest<void> markAsRead(int id, AccessToken accessToken) async {
+ApiRequest<void> markAsRead(String id, AccessToken accessToken) async {
   final response = await http.patch(Uri.parse('$baseUrl/$id/read'), headers: getHeaders(accessToken));
   if (response.statusCode == 200 || response.statusCode == 204) {
     return Result.ok(null);
@@ -48,7 +48,7 @@ ApiRequest<void> markAllAsRead(AccessToken accessToken) async {
   return Result.error(_parseError(response.statusCode));
 }
 
-ApiRequest<void> delete(int id, AccessToken accessToken) async {
+ApiRequest<void> delete(String id, AccessToken accessToken) async {
   final response = await http.delete(Uri.parse('$baseUrl/$id'), headers: getHeaders(accessToken));
   if (response.statusCode == 200 || response.statusCode == 204) {
     return Result.ok(null);

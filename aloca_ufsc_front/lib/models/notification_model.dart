@@ -1,15 +1,15 @@
 enum NotificationKind { general, newVenue, noVenue3Days, noVenue24Hours, suspendedDatePassed }
 
 class AppNotification {
-  final int id;
+  final String? id;
   final NotificationKind kind;
   final String message;
-  final int? eventId;
+  final String? eventId;
   final DateTime createdAt;
   final bool read;
 
   AppNotification({
-    required this.id,
+    this.id,
     this.kind = NotificationKind.general,
     required this.message,
     this.eventId,

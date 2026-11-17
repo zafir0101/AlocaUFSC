@@ -33,9 +33,6 @@ public class FacadeDbRest {
     }
 
     public Event saveEvent(Event event) {
-        if (event.getId() == null) {
-            event.setId(mockData.nextEventId());
-        }
         mockData.save(event);
         return event;
     }
@@ -77,7 +74,7 @@ public class FacadeDbRest {
     public void deleteVenueById(String id) {
         mockData.deleteVenueById(id);
     }
-    public Optional<Event> findEvent(Long eventId) {
+    public Optional<Event> findEvent(String eventId) {
         return mockData.findEventById(eventId);
     }
 
@@ -91,14 +88,11 @@ public class FacadeDbRest {
 
 
     public Notification saveNotification(Notification notification) {
-        if (notification.getId() == null) {
-            notification.setId(mockData.nextNotificationId());
-        }
         mockData.save(notification);
         return notification;
     }
 
-    public Optional<Notification> findNotification(Long id) {
+    public Optional<Notification> findNotification(String id) {
         return mockData.findNotificationById(id);
     }
 
@@ -106,7 +100,7 @@ public class FacadeDbRest {
         return mockData.findNotificationsByRecipientId(recipient.getId());
     }
 
-    public void deleteNotification(Long id) {
+    public void deleteNotification(String id) {
         mockData.deleteNotificationById(id);
     }
 
@@ -115,14 +109,11 @@ public class FacadeDbRest {
     }
 
     public Allocation saveAllocation(Allocation allocation) {
-        if (allocation.getId() == null) {
-            allocation.setId(mockData.nextAllocationId());
-        }
         mockData.save(allocation);
         return allocation;
     }
 
-    public Optional<Allocation> findAllocation(Long id) {
+    public Optional<Allocation> findAllocation(String id) {
         return mockData.findAllocationById(id);
     }
 
@@ -134,11 +125,7 @@ public class FacadeDbRest {
         return mockData.findAllocationsByRequesterId(requester.getId());
     }
 
-    public List<Allocation> findAllocationsByEvent(Long eventId) {
-        return mockData.findAllocationsByEventId(eventId);
-    }
-
-    public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, Long ignoreAllocationId) {
+    public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, String ignoreAllocationId) {
         return mockData.findAvailableVenues(start, end, ignoreAllocationId);
     }
 }

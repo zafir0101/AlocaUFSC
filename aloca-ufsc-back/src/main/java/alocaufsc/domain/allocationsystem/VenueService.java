@@ -30,8 +30,12 @@ public class VenueService {
     }
 
     public List<Venue> getAllVenues(User currentUser) {
+        return facadeDbRest.findAllVenues();
+    }
+
+    public List<Venue> getVenuesWithFilter(User currentUser) {
         return facadeDbRest.findAllVenues().stream()
-                .filter(venue -> currentUser.getEntity() == Entity.MANAGER || venue.allows(currentUser.getEntity()))
+                .filter(venue -> venue.allows(currentUser.getEntity()))
                 .sorted(Comparator.comparing(Venue::getCenter)
                         .thenComparing(Venue::getBuilding, String.CASE_INSENSITIVE_ORDER)
                         .thenComparing(Venue::getName, String.CASE_INSENSITIVE_ORDER))

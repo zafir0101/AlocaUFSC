@@ -2,10 +2,7 @@ package alocaufsc.entrypoint;
 
 import alocaufsc.domain.Period;
 import alocaufsc.domain.entities.User;
-import alocaufsc.domain.eventsystem.DuplicateEventException;
-import alocaufsc.domain.eventsystem.Event;
-import alocaufsc.domain.eventsystem.EventService;
-import alocaufsc.domain.eventsystem.InfoEvent;
+import alocaufsc.domain.eventsystem.*;
 import alocaufsc.entrypoint.DTO.EventRequest;
 import alocaufsc.entrypoint.DTO.EventResponse;
 import org.springframework.http.HttpStatus;
@@ -37,9 +34,16 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse getEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.getEvent(user, id);
         return EventResponse.from(event);
+    }
+
+    @GetMapping("/status/{status}")
+    public List<EventResponse> getEventsByStatus(@PathVariable EventStatus status) {
+        return eventService.getEventsByStatus(status).stream()
+                .map(event -> EventResponse.from(event))
+                .toList();
     }
 
     @PostMapping
@@ -50,34 +54,39 @@ public class EventController {
     }
 
     @PutMapping("/{id}")
-    public EventResponse editEvent(@AuthenticationPrincipal User user, @PathVariable Long id, @RequestBody EventRequest request) {
+    public EventResponse editEvent(@AuthenticationPrincipal User user, @PathVariable String id, @RequestBody EventRequest request) {
         Event event = eventService.editEvent(user, id, toInfoEvent(request));
         return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/cancel")
-    public EventResponse cancelEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse cancelEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.cancelEvent(user, id);
         return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/suspend")
-    public EventResponse suspendEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse suspendEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.suspendEvent(user, id);
         return EventResponse.from(event);
     }
 
     @PatchMapping("/{id}/reactivate")
-    public EventResponse reactivateEvent(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public EventResponse reactivateEvent(@AuthenticationPrincipal User user, @PathVariable String id) {
         Event event = eventService.reactivateEvent(user, id);
         return EventResponse.from(event);
     }
 
-    private InfoEvent toInfoEvent(EventRequest request) {
+    @GetMapping("/eligible-events")
+    public List<EventResponse> eligibleEvents(@AuthenticationPrincipal User user) {
+        return (eventService.getEligibleEvents(user).stream().map(EventResponse::from).toList());
+    }
+
+    private EventInfo toInfoEvent(EventRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Os dados do evento não podem ser nulos.");
         }
-        return new InfoEvent(request.title(), request.description(), new Period(request.start(), request.end()), null);
+        return new EventInfo(request.title(), request.description(), new Period(request.start(), request.end()), null);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

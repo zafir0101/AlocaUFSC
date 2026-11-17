@@ -26,12 +26,9 @@ public class MockData {
     private final Map<String, String> refreshTokens = new ConcurrentHashMap<>();
     private final Map<String, String> accessTokens = new ConcurrentHashMap<>();
     private final Map<String, Venue> venues = new ConcurrentHashMap<>();
-    private final Map<Long, Event> events = new ConcurrentHashMap<>();
-    private final AtomicLong eventIdSequence = new AtomicLong();
-    private final Map<Long, Notification> notifications = new ConcurrentHashMap<>();
-    private final AtomicLong notificationIdSequence = new AtomicLong();
-    private final Map<Long, Allocation> allocations = new ConcurrentHashMap<>();
-    private final AtomicLong allocationIdSequence = new AtomicLong();
+    private final Map<String, Event> events = new ConcurrentHashMap<>();
+    private final Map<String, Notification> notifications = new ConcurrentHashMap<>();
+    private final Map<String, Allocation> allocations = new ConcurrentHashMap<>();
 
     public MockData() {
         seed(); // Popula o banco falso ao iniciar a aplicação
@@ -77,10 +74,6 @@ public class MockData {
         return Optional.ofNullable(refreshTokens.get(token));
     }
 
-    public void removeRefreshToken(String token) {
-        refreshTokens.remove(token);
-    }
-
     public void saveAccessToken(String token, String email) {
         accessTokens.put(token, email);
     }
@@ -101,11 +94,7 @@ public class MockData {
         venues.remove(id);
     }
 
-    public Long nextEventId() {
-        return eventIdSequence.incrementAndGet();
-    }
-
-    public Optional<Event> findEventById(Long id) {
+    public Optional<Event> findEventById(String id) {
         return Optional.ofNullable(events.get(id));
     }
 
@@ -115,11 +104,7 @@ public class MockData {
                 .toList();
     }
 
-    public Long nextNotificationId() {
-        return notificationIdSequence.incrementAndGet();
-    }
-
-    public void deleteNotificationById(Long id) {
+    public void deleteNotificationById(String id) {
         notifications.remove(id);
     }
 
@@ -127,7 +112,7 @@ public class MockData {
         return new ArrayList<>(events.values());
     }
 
-    public Optional<Notification> findNotificationById(Long id) {
+    public Optional<Notification> findNotificationById(String id) {
         return Optional.ofNullable(notifications.get(id));
     }
 
@@ -137,12 +122,7 @@ public class MockData {
                 .toList();
     }
 
-
-    public Long nextAllocationId() {
-        return allocationIdSequence.incrementAndGet();
-    }
-
-    public Optional<Allocation> findAllocationById(Long id) {
+    public Optional<Allocation> findAllocationById(String id) {
         return Optional.ofNullable(allocations.get(id));
     }
 
@@ -156,13 +136,11 @@ public class MockData {
                 .toList();
     }
 
-    public List<Allocation> findAllocationsByEventId(Long eventId) {
-        return allocations.values().stream()
-                .filter(a -> a.getEvent().getId().equals(eventId))
-                .toList();
+    public Allocation findAllocationByEventId(String eventId) {
+        return events.get(eventId).getAllocation();
     }
 
-    public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, Long ignoreAllocationId) {
+    public List<Venue> findAvailableVenues(LocalDateTime start, LocalDateTime end, String ignoreAllocationId) {
         return venues.values().stream()
                 .filter(v -> allocations.values().stream().noneMatch(a ->
                         a.getStatus() == AllocationStatus.APPROVED
@@ -182,7 +160,7 @@ public class MockData {
         save(admin);
 
         Venue auditorium = seedVenue("CTC", "Block A - CTC Management", "AUD-01", "CTC Auditorium", 250,
-                "Auditorium with projector, sound system, and stage.", Entity.PROFESSOR, Entity.ORGANIZATION);
+                "Auditorium with projector, sound system, and stage.", Entity.PROFESSOR, Entity.ORGANIZATION, Entity.MANAGER);
 
         seedVenue("CTC", "INE - Informatics and Statistics", "LAB-01", "Computer Lab 1", 40,
                 "40 computers with Linux and a projector.", Entity.PROFESSOR);
@@ -201,54 +179,6 @@ public class MockData {
 
         seedVenue("OTHER", "University Library (BU)", "ESP-01", "BU Lounge Area", 80,
                 "Open space for exhibitions and fairs.", Entity.STUDENT, Entity.PROFESSOR, Entity.ORGANIZATION);
-
-        LocalDate today = LocalDate.now();
-        LocalDateTime currentHour = LocalDateTime.now().truncatedTo(ChronoUnit.HOURS);
-
-        seedEvent(maria, "Oficina de Design de Interfaces",
-                "Oficina prática de prototipação de telas.",
-                new Period(currentHour.minusHours(1), currentHour.plusHours(2)), EventStatus.ATIVO);
-        Event flutterTalk = seedEvent(maria, "Palestra: Introdução ao Flutter",
-                "Palestra introdutória sobre desenvolvimento mobile com Flutter.",
-                new Period(today.plusDays(2).atTime(19, 0), today.plusDays(2).atTime(21, 0)), EventStatus.ATIVO);
-        // Começa em ~20 horas: gera o lembrete de 24 horas sem espaço.
-        seedEvent(maria, "Reunião de Planejamento da Semana Acadêmica",
-                "Reunião com a comissão organizadora.",
-                new Period(currentHour.plusHours(20), currentHour.plusHours(22)), EventStatus.ATIVO);
-        Event academicWeek = seedEvent(maria, "Semana Acadêmica de Computação",
-                "Uma semana de palestras, minicursos e competições.",
-                new Period(today.plusDays(10).atTime(9, 0), today.plusDays(14).atTime(18, 0)), EventStatus.ATIVO);
-        seedEvent(maria, "Workshop de Spring Boot",
-                "Workshop prático de APIs REST com Spring Boot.",
-                new Period(today.minusDays(7).atTime(14, 0), today.minusDays(7).atTime(17, 0)), EventStatus.ATIVO);
-        seedEvent(maria, "Palestra: Carreira em Tecnologia",
-                "Bate-papo com profissionais da área sobre mercado de trabalho.",
-                new Period(today.minusDays(30).atTime(19, 0), today.minusDays(30).atTime(21, 0)), EventStatus.ATIVO);
-        seedEvent(maria, "Minicurso de Git e GitHub",
-                "Minicurso prático de versionamento de código.",
-                new Period(today.minusDays(15).atTime(9, 0), today.minusDays(15).atTime(12, 0)), EventStatus.ATIVO);
-        seedEvent(maria, "Feira de Projetos",
-                "Exposição dos projetos finais das disciplinas.",
-                new Period(today.minusDays(45).atTime(13, 0), today.minusDays(45).atTime(18, 0)), EventStatus.CANCELADO);
-        seedEvent(maria, "Hackathon UFSC",
-                "Maratona de programação de 24 horas.",
-                new Period(today.plusDays(20).atTime(8, 0), today.plusDays(21).atTime(8, 0)), EventStatus.SUSPENSO);
-        seedEvent(maria, "Semana de Recepção dos Calouros",
-                "Atividades de boas-vindas para os ingressantes.",
-                new Period(today.minusDays(10).atTime(9, 0), today.minusDays(8).atTime(17, 0)), EventStatus.SUSPENSO);
-        seedEvent(maria, "Visita Técnica ao Sapiens Parque",
-                "Visita guiada às empresas do parque tecnológico.",
-                new Period(today.plusDays(25).atTime(8, 0), today.plusDays(25).atTime(12, 0)), EventStatus.CANCELADO);
-
-        // UC1/UC2: um pedido PENDING (aparece na fila do admin) e um APPROVED (bloqueia o ginásio no período).
-        seedAllocation(auditorium, flutterTalk, maria,
-                today.plusDays(2).atTime(19, 0), today.plusDays(2).atTime(21, 0), AllocationStatus.PENDING);
-        seedAllocation(gym, academicWeek, maria,
-                today.plusDays(10).atTime(9, 0), today.plusDays(14).atTime(18, 0), AllocationStatus.APPROVED);
-        academicWeek.setStatus(EventStatus.ATIVO);
-
-        seedNotification(maria, NotificationType.NOVO_ESPACO, "Novo espaço disponível: Auditório do CTC (CTC - Bloco A - Direção do CTC).",
-                null, LocalDateTime.now().minusDays(1), true);
     }
 
     private Venue seedVenue(String center, String building, String code, String name, int capacity, String description,
@@ -260,19 +190,19 @@ public class MockData {
 
     private Allocation seedAllocation(Venue venue, Event event, User requester, LocalDateTime start, LocalDateTime end,
                                       AllocationStatus status) {
-        Allocation allocation = new Allocation(nextAllocationId(), venue, event, requester, start, end, status,
-                LocalDateTime.now().minusHours(3));
+        Allocation allocation = new Allocation(UUID.randomUUID().toString(), venue,
+                requester, start, end, status, LocalDateTime.now().minusHours(3));
         save(allocation);
         return allocation;
     }
 
-    private void seedNotification(User recipient, NotificationType type, String message, Long eventId,
+    private void seedNotification(User recipient, NotificationType type, String message, String eventId,
                                   LocalDateTime createdAt, boolean read) {
-        save(new Notification(nextNotificationId(), recipient, type, message, eventId, createdAt, read));
+        save(new Notification(UUID.randomUUID().toString(), recipient, type, message, eventId, createdAt, read));
     }
 
     private Event seedEvent(User creator, String title, String description, Period period, EventStatus status) {
-        Event event = new Event(nextEventId(), title, description, period, status, null, creator);
+        Event event = new Event(UUID.randomUUID().toString(), title, description, period, status, null, creator);
         save(event);
         return event;
     }

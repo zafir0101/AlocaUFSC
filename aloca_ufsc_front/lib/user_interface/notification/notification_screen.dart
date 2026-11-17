@@ -53,9 +53,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  // Refatorado para o appState e uso do Result
   Future<void> _delete(AppNotification n) async {
-    final result = await appState.deleteNotification(n.id);
+    final result = await appState.deleteNotification(n.id!);
     if (result.isError) {
       _showMessage(result.error.toString().replaceFirst('Exception: ', ''));
     }
@@ -80,8 +79,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Future<void> _open(AppNotification n) async {
     if (!n.read) {
-      // Uso do appState para marcar como lida, atualizando apenas se sucesso
-      appState.markNotificationAsRead(n.id).then((result) {
+      appState.markNotificationAsRead(n.id!).then((result) {
         if (result.isOk) _load();
       });
     }
@@ -107,7 +105,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
-  Future<void> _openEvent(int eventId, {required bool edit}) async {
+  Future<void> _openEvent(String eventId, {required bool edit}) async {
     final result = await appState.fetchEvent(eventId);
     
     if (!mounted) return;

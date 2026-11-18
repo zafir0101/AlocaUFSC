@@ -3,7 +3,7 @@ package alocaufsc.domain.allocationsystem;
 import alocaufsc.domain.entities.Entity;
 import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.Event;
-import alocaufsc.domain.eventsystem.EventObserver;
+import alocaufsc.domain.eventsystem.EventAllocationListener;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.stereotype.Service;
 
@@ -12,17 +12,34 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class AllocationService {
     public static final int MAX_REJECTION_REASON_LENGTH = 500;
 
-    private final FacadeDbRest facadeDb;
-    private final EventObserver eventObserver;
+    private final List<AllocationStatusListener> observers = new CopyOnWriteArrayList<>();
 
-    public AllocationService(FacadeDbRest facadeDb, EventObserver eventObserver) {
+    private final FacadeDbRest facadeDb;
+    private final EventAllocationListener eventObserver;
+
+    public AllocationService(FacadeDbRest facadeDb, EventAllocationListener eventObserver) {
         this.facadeDb = facadeDb;
         this.eventObserver = eventObserver;
+    }
+
+    public void addObserver(AllocationStatusListener observer) {
+       observers.add(observer);
+    }
+
+    public void removeObserver(AllocationStatusListener observer) {
+        observers.remove(observer);
+    }
+
+    public void notifyObservers(Allocation allocation) {
+       for (AllocationStatusListener observer : observers) {
+          observer.onAllocationStatusChanged(allocation);
+       }
     }
 
     public List<Venue> searchAvailableVenues(User user, LocalDateTime start, LocalDateTime end) {
@@ -58,7 +75,7 @@ public class AllocationService {
         Venue venue = requireAvailableVenue(user, info.venueId(), info.start(), info.end(), null);
 
         Allocation allocation = new Allocation(UUID.randomUUID().toString(), venue, user, info.start(), info.end(),
-                AllocationStatus.PENDING, LocalDateTime.now());
+                LocalDateTime.now());
 
         event.setAllocation(allocation);
         eventObserver.addObserver(allocation.getId(), event);

@@ -16,13 +16,13 @@ public class Event {
 
     public Event() {}
 
-    public Event(String id, String title, String description, Period period, EventStatus status, Allocation allocation,
+    public Event(String id, String title, String description, Period period, Allocation allocation,
                  User creator) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.period = period;
-        this.status = status;
+        this.status = EventStatus.NO_ALLOCATIONS;
         this.allocation = allocation;
         this.creator = creator;
     }
@@ -45,5 +45,5 @@ public class Event {
     public void setAllocation(Allocation allocation) { this.allocation = allocation; }
     public User getCreator() { return creator; }
     public void setCreator(User creator) { this.creator = creator; }
-    public boolean isAllocatable() { return this.status == EventStatus.SEM_ESPACO; }
+    public boolean isAllocatable() { return this.status == EventStatus.NO_ALLOCATIONS; }
 }

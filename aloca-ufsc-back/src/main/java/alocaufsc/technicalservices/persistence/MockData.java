@@ -104,6 +104,12 @@ public class MockData {
                 .toList();
     }
 
+    public Optional<Event> findEventByAllocationId(String allocationId) {
+        return events.values().stream()
+                .filter(e -> e.getAllocation().getId().equals(allocationId))
+                .findFirst();
+    }
+
     public void deleteNotificationById(String id) {
         notifications.remove(id);
     }

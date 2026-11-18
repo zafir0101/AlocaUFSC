@@ -60,7 +60,7 @@ public class VenueService {
                 info.allowedRoles());
         Venue saved = facadeDbRest.save(venue);
 
-        notificationService.notifyRoles(saved.getAllowedRoles(), NotificationType.NOVO_ESPACO,
+        notificationService.notifyRoles(saved.getAllowedRoles(), NotificationType.NEW_VENUE,
                 "Novo espaço disponível: " + saved.getName() + " (" + saved.getLocation() + ").", null);
         return saved;
     }

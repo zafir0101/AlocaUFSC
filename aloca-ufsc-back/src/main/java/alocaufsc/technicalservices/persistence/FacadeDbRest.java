@@ -74,6 +74,7 @@ public class FacadeDbRest {
     public void deleteVenueById(String id) {
         mockData.deleteVenueById(id);
     }
+
     public Optional<Event> findEvent(String eventId) {
         return mockData.findEventById(eventId);
     }
@@ -81,6 +82,8 @@ public class FacadeDbRest {
     public List<Event> findEventsByCreator(User creator) {
         return mockData.findEventsByCreatorId(creator.getId());
     }
+
+    public Optional<Event> findEventByAllocationId(String allocationId) { return mockData.findEventByAllocationId(allocationId); }
 
     public Optional<Venue> findVenue(String id) {
         return mockData.findById(id);

@@ -22,13 +22,13 @@ public class Allocation {
     public Allocation() {}
 
     public Allocation(String id, Venue venue, User requester, LocalDateTime start, LocalDateTime end,
-                      AllocationStatus status, LocalDateTime createdAt) {
+                      LocalDateTime createdAt) {
         this.id = id;
         this.venue = venue;
         this.requester = requester;
         this.start = start;
         this.end = end;
-        this.status = status;
+        this.status = AllocationStatus.PENDING;
         this.createdAt = createdAt;
     }
 

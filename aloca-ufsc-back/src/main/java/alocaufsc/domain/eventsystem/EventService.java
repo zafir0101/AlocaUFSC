@@ -35,13 +35,13 @@ public class EventService {
         checkDuplicate(u, null, ie);
 
         Event event = new Event(UUID.randomUUID().toString(), ie.title().trim(), ie.description(), ie.period(),
-                EventStatus.SEM_ESPACO, null, u);
+                null, u);
         return facadeDbRest.saveEvent(event);
     }
 
     public List<Event> getEventsByCreator(User u) {
         return facadeDbRest.findEventsByCreator(u).stream()
-                .sorted(Comparator.comparing((Event e) -> e.getStatus() == EventStatus.CANCELADO)
+                .sorted(Comparator.comparing((Event e) -> e.getStatus() == EventStatus.CANCELED)
                         .thenComparing(e -> e.getPeriod().start()))
                 .toList();
     }
@@ -59,10 +59,10 @@ public class EventService {
 
     public Event editEvent(User u, String eventId, EventInfo newInfoEvent) {
         Event event = getOwnedEvent(u, eventId);
-        if (event.getStatus() == EventStatus.CANCELADO) {
+        if (event.getStatus() == EventStatus.CANCELED) {
             throw new IllegalArgumentException("Não é possível editar um evento cancelado.");
         }
-        if (event.getStatus() == EventStatus.ATIVO) {
+        if (event.getStatus() == EventStatus.ACTIVE) {
             ensureNotEnded(event, "Não é possível editar um evento que já passou.");
         }
         validate(newInfoEvent);
@@ -93,12 +93,12 @@ public class EventService {
 
     public Event suspendEvent(User u, String eventId) {
         Event event = getOwnedEvent(u, eventId);
-        if (event.getStatus() != EventStatus.ATIVO) {
+        if (event.getStatus() != EventStatus.ACTIVE) {
             throw new IllegalArgumentException("Apenas eventos ativos podem ser suspensos.");
         }
         ensureNotEnded(event, "Não é possível suspender um evento que já passou.");
 
-        event.setStatus(EventStatus.SUSPENSO);
+        event.setStatus(EventStatus.SUSPENDED);
         event.getAllocation().setStatus(AllocationStatus.CANCELED);
 
         facadeDbRest.saveAllocation(event.getAllocation());
@@ -110,25 +110,25 @@ public class EventService {
 
     public Event reactivateEvent(User u, String eventId) {
         Event event = getOwnedEvent(u, eventId);
-        if (event.getStatus() != EventStatus.SUSPENSO) {
+        if (event.getStatus() != EventStatus.SUSPENDED) {
             throw new IllegalArgumentException("Apenas eventos suspensos podem ser reativados.");
         }
         ensureNotEnded(event, "A data deste evento já passou. Altere para uma data futura antes de reativar.");
 
-        event.setStatus(EventStatus.SEM_ESPACO);
+        event.setStatus(EventStatus.NO_ALLOCATIONS);
         return facadeDbRest.saveEvent(event);
     }
 
     public Event cancelEvent(User u, String eventId) {
         Event event = getOwnedEvent(u, eventId);
-        if (event.getStatus() == EventStatus.CANCELADO) {
+        if (event.getStatus() == EventStatus.CANCELED) {
             throw new IllegalArgumentException("O evento já está cancelado.");
         }
-        if (event.getStatus() == EventStatus.ATIVO) {
+        if (event.getStatus() == EventStatus.ACTIVE) {
             ensureNotEnded(event, "Não é possível cancelar um evento que já passou.");
         }
 
-        event.setStatus(EventStatus.CANCELADO);
+        event.setStatus(EventStatus.CANCELED);
         event.getAllocation().setStatus(AllocationStatus.CANCELED);
 
         facadeDbRest.saveAllocation(event.getAllocation());
@@ -180,7 +180,7 @@ public class EventService {
         String title = ie.title().trim();
         facadeDbRest.findEventsByCreator(u).stream()
                 .filter(e -> !e.getId().equals(ignoredEventId))
-                .filter(e -> e.getStatus() != EventStatus.CANCELADO)
+                .filter(e -> e.getStatus() != EventStatus.CANCELED)
                 .filter(e -> e.getTitle().equalsIgnoreCase(title))
                 .filter(e -> overlaps(e.getPeriod(), ie.period()))
                 .findFirst()

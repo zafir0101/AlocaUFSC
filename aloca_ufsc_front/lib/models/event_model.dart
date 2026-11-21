@@ -1,4 +1,4 @@
-enum EventStatus { noVenue, pending, active, suspended, cancelled }
+enum EventStatus { noAllocations, pending, active, suspended, canceled }
 
 class Event {
     final String? id;
@@ -19,13 +19,13 @@ class Event {
         required this.start,
         required this.end,
         this.creatorName,
-        this.status = EventStatus.noVenue,
+        this.status = EventStatus.noAllocations,
         this.allocationId,
         this.venueName,
         this.requesterName,
     });
 
-    bool get isCancelled => status == EventStatus.cancelled;
+    bool get isCancelled => status == EventStatus.canceled;
 
     bool get isSuspended => status == EventStatus.suspended;
 
@@ -44,7 +44,7 @@ class Event {
 
     bool get canReactivate => isSuspended && !hasEnded;
 
-    bool get showsAllocationReminder => status == EventStatus.noVenue && start.isAfter(DateTime.now());
+    bool get showsAllocationReminder => status == EventStatus.noAllocations && start.isAfter(DateTime.now());
 
     factory Event.fromJson(Map<String, dynamic> json) {
         return Event(
@@ -62,16 +62,16 @@ class Event {
 
     static EventStatus _parseEventStatus(String? status) {
         switch (status) {
-            case 'AGUARDANDO_APROVACAO':
+            case 'PENDING':
                 return EventStatus.pending;
-            case 'ATIVO':
+            case 'ACTIVE':
                 return EventStatus.active;
-            case 'SUSPENSO':
+            case 'SUSPENDED':
                 return EventStatus.suspended;
-            case 'CANCELADO':
-                return EventStatus.cancelled;
+            case 'CANCELED':
+                return EventStatus.canceled;
             default:
-                return EventStatus.noVenue;
+                return EventStatus.noAllocations;
         }
     }
     Map<String, dynamic> toRequestJson() {

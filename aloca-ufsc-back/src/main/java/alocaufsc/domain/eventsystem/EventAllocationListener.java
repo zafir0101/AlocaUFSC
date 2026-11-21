@@ -4,19 +4,11 @@ import alocaufsc.domain.allocationsystem.Allocation;
 import alocaufsc.domain.allocationsystem.AllocationService;
 import alocaufsc.domain.allocationsystem.AllocationStatus;
 import alocaufsc.domain.allocationsystem.AllocationStatusListener;
-import alocaufsc.domain.notificationsystem.Notification;
 import alocaufsc.domain.notificationsystem.NotificationService;
-import alocaufsc.domain.notificationsystem.NotificationType;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-
 
 @Service
 public class EventAllocationListener implements AllocationStatusListener {
@@ -30,6 +22,7 @@ public class EventAllocationListener implements AllocationStatusListener {
         allocationService.addObserver(this);
     }
 
+    @Override
     public void onAllocationStatusChanged(Allocation allocation) {
         Event event = facadeDbRest.findEventByAllocationId(allocation.getId())
                 .orElseThrow(() -> new NoSuchElementException("Evento não encontrado."));
@@ -41,7 +34,7 @@ public class EventAllocationListener implements AllocationStatusListener {
                 return;
 
             case AllocationStatus.PENDING:
-                event.setStatus(EventStatus.AWAITING_APPROVAL);
+                event.setStatus(EventStatus.PENDING);
                 facadeDbRest.saveEvent(event);
                 return;
 
@@ -53,5 +46,4 @@ public class EventAllocationListener implements AllocationStatusListener {
                 notificationService.notifyAllocationRefused(allocation, event);
         }
     }
-
 }

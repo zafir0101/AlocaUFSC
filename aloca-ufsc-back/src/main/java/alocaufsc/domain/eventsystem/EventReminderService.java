@@ -44,7 +44,7 @@ public class EventReminderService {
         EventStatus eventStatus = event.getStatus();
         if (eventStatus == EventStatus.ACTIVE) return;
 
-        String situation = eventStatus == EventStatus.AWAITING_APPROVAL
+        String situation = eventStatus == EventStatus.PENDING
                 ? "o espaço ainda não foi confirmado."
                 : "ainda não tem espaço definido.";
         Duration untilStart = Duration.between(now, start);

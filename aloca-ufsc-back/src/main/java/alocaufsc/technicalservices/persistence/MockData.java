@@ -106,7 +106,7 @@ public class MockData {
 
     public Optional<Event> findEventByAllocationId(String allocationId) {
         return events.values().stream()
-                .filter(e -> e.getAllocation().getId().equals(allocationId))
+                .filter(e -> e.getAllocation() != null && e.getAllocation().getId().equals(allocationId))
                 .findFirst();
     }
 

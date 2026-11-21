@@ -22,7 +22,7 @@ class _AdminAllocationsTabState extends State<AdminAllocationsTab> {
 
   Future<void> _loadRequests() async {
     setState(() => _loading = true);
-    final result = await appState.fetchEventsByStatus('AGUARDANDO_APROVACAO'); 
+    final result = await appState.fetchEventsByStatus('PENDING'); 
     if (mounted) {
       setState(() {
         if (!result.isError) _requests = result.data ?? [];

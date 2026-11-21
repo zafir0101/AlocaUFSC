@@ -16,6 +16,16 @@ public class Event {
 
     public Event() {}
 
+    public Event(String id, String title, String description, Period period, EventStatus status, Allocation allocation,
+                 User creator) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.period = period;
+        this.status = status;
+        this.allocation = allocation;
+        this.creator = creator;
+    }
     public Event(String id, String title, String description, Period period, Allocation allocation,
                  User creator) {
         this.id = id;

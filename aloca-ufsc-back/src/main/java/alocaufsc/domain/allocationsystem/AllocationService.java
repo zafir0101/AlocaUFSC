@@ -3,7 +3,6 @@ package alocaufsc.domain.allocationsystem;
 import alocaufsc.domain.entities.Entity;
 import alocaufsc.domain.entities.User;
 import alocaufsc.domain.eventsystem.Event;
-import alocaufsc.domain.eventsystem.EventAllocationListener;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.stereotype.Service;
 
@@ -21,11 +20,9 @@ public class AllocationService {
     private final List<AllocationStatusListener> observers = new CopyOnWriteArrayList<>();
 
     private final FacadeDbRest facadeDb;
-    private final EventAllocationListener eventObserver;
 
-    public AllocationService(FacadeDbRest facadeDb, EventAllocationListener eventObserver) {
+    public AllocationService(FacadeDbRest facadeDb) {
         this.facadeDb = facadeDb;
-        this.eventObserver = eventObserver;
     }
 
     public void addObserver(AllocationStatusListener observer) {
@@ -76,12 +73,13 @@ public class AllocationService {
 
         Allocation allocation = new Allocation(UUID.randomUUID().toString(), venue, user, info.start(), info.end(),
                 LocalDateTime.now());
+        facadeDb.saveAllocation(allocation);
 
         event.setAllocation(allocation);
-        eventObserver.addObserver(allocation.getId(), event);
-        eventObserver.updateEventStatus(allocation.getId());
 
-        return facadeDb.saveAllocation(allocation);
+        notifyObservers(allocation);
+
+        return allocation;
     }
 
     public synchronized void updateAllocation(User user, Allocation allocation, AllocationInfo allocationInfo) {
@@ -97,7 +95,7 @@ public class AllocationService {
                 .stream().noneMatch(v -> v.getId().equals(allocation.getVenue().getId()));
         if (conflict) {
             allocation.setStatus(AllocationStatus.CANCELED);
-            eventObserver.updateEventStatus(allocation.getId());
+            notifyObservers(allocation);
             return;
         }
 
@@ -108,7 +106,7 @@ public class AllocationService {
         allocation.updateData(allocation.getVenue(), allocationInfo.start(), allocationInfo.end());
 
         facadeDb.saveAllocation(allocation);
-        eventObserver.updateEventStatus(allocation.getId());
+        notifyObservers(allocation);
     }
 
     public List<Allocation> getMyAllocations(User user) {
@@ -140,7 +138,7 @@ public class AllocationService {
         Allocation allocation = getAllocationEntity(allocationId);
         ensurePending(allocation);
 
-        boolean conflict = facadeDb.findAvailableVenues(allocation.getStart(), allocation.getEnd(), allocation.getId())
+        boolean conflict = facadeDb.findAvailableVenues(allocation.getStart(), allocation.getEnd(), allocationId)
                 .stream().noneMatch(v -> v.getId().equals(allocation.getVenue().getId()));
         if (conflict) {
             throw new IllegalStateException("Conflito de agenda: o espaço já está alocado neste período.");
@@ -151,9 +149,10 @@ public class AllocationService {
         allocation.setReviewedAt(LocalDateTime.now());
         allocation.setRejectionReason(null);
 
-        eventObserver.updateEventStatus(allocationId);
+        facadeDb.saveAllocation(allocation);
+        notifyObservers(allocation);
 
-        return facadeDb.saveAllocation(allocation);
+        return allocation;
     }
 
     public synchronized Allocation rejectAllocation(User admin, String id, String reason) {
@@ -168,9 +167,10 @@ public class AllocationService {
         allocation.setReviewedAt(LocalDateTime.now());
         allocation.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
 
-        eventObserver.updateEventStatus(allocation.getId());
+        facadeDb.saveAllocation(allocation);
+        notifyObservers(allocation);
 
-        return facadeDb.saveAllocation(allocation);
+        return allocation;
     }
 
     private Allocation getAllocationEntity(String id) {

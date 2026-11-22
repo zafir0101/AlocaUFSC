@@ -10,7 +10,7 @@ public class DuplicateEventException extends RuntimeException {
     public DuplicateEventException(Event existingEvent) {
         super("O evento \"" + existingEvent.getTitle() + "\" já existe em "
                 + existingEvent.getPeriod().start().format(FORMAT)
-                + (existingEvent.getStatus() == EventStatus.SUSPENSO ? " (suspenso)." : "."));
+                + (existingEvent.getStatus() == EventStatus.SUSPENDED ? " (suspenso)." : "."));
         this.existingEvent = existingEvent;
     }
 

@@ -1,7 +1,9 @@
 package alocaufsc.domain.notificationsystem;
 
+import alocaufsc.domain.allocationsystem.Allocation;
 import alocaufsc.domain.entities.Entity;
 import alocaufsc.domain.entities.User;
+import alocaufsc.domain.eventsystem.Event;
 import alocaufsc.technicalservices.persistence.FacadeDbRest;
 import org.springframework.stereotype.Service;
 
@@ -12,8 +14,23 @@ import java.util.*;
 public class NotificationService {
     private final FacadeDbRest facadeDbRest;
 
-    public NotificationService(FacadeDbRest facadeDbRest) {
+    private final NotificationDirector notificationDirector;
+
+    public NotificationService(FacadeDbRest facadeDbRest, NotificationDirector notificationDirector) {
         this.facadeDbRest = facadeDbRest;
+        this.notificationDirector = notificationDirector;
+    }
+
+    public void notifyAllocationApproved(Allocation allocation, Event event) {
+        AppNotificationBuilder appNotificationBuilder = new AppNotificationBuilder();
+        notificationDirector.buildAllocationApproved(appNotificationBuilder, allocation, event);
+        facadeDbRest.saveNotification(appNotificationBuilder.getNotification());
+    }
+
+    public void notifyAllocationRefused(Allocation allocation, Event event) {
+        AppNotificationBuilder appNotificationBuilder = new AppNotificationBuilder();
+        notificationDirector.buildAllocationRefused(appNotificationBuilder, allocation, event);
+        facadeDbRest.saveNotification(appNotificationBuilder.getNotification());
     }
 
     public List<Notification> getNotifications(User user) {
@@ -35,7 +52,7 @@ public class NotificationService {
     }
 
     public Notification notify(User recipient, String message, String eventId) {
-        return notify(recipient, NotificationType.GERAL, message, eventId);
+        return notify(recipient, NotificationType.GENERAL, message, eventId);
     }
 
     public void notifyOnce(User recipient, NotificationType type, String message, String eventId) {

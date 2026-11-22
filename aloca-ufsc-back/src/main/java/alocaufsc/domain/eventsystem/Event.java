@@ -26,6 +26,16 @@ public class Event {
         this.allocation = allocation;
         this.creator = creator;
     }
+    public Event(String id, String title, String description, Period period, Allocation allocation,
+                 User creator) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.period = period;
+        this.status = EventStatus.NO_ALLOCATIONS;
+        this.allocation = allocation;
+        this.creator = creator;
+    }
 
     public boolean isCreatedBy(User user) {
         return creator != null && user != null && creator.getId().equals(user.getId());
@@ -45,5 +55,5 @@ public class Event {
     public void setAllocation(Allocation allocation) { this.allocation = allocation; }
     public User getCreator() { return creator; }
     public void setCreator(User creator) { this.creator = creator; }
-    public boolean isAllocatable() { return this.status == EventStatus.SEM_ESPACO; }
+    public boolean isAllocatable() { return this.status == EventStatus.NO_ALLOCATIONS; }
 }

@@ -27,10 +27,10 @@ public class EventReminderService {
     public void sendReminders() {
         LocalDateTime now = LocalDateTime.now();
         for (Event event : facadeDbRest.findAllEvents()) {
-            if (event.getStatus() == EventStatus.ATIVO) {
+            if (event.getStatus() == EventStatus.ACTIVE) {
                 remindMissingVenue(event, now);
-            } else if (event.getStatus() == EventStatus.SUSPENSO && !event.getPeriod().end().isAfter(now)) {
-                notificationService.notifyOnce(event.getCreator(), NotificationType.EVENTO_SUSPENSO_DATA_PASSADA,
+            } else if (event.getStatus() == EventStatus.SUSPENDED && !event.getPeriod().end().isAfter(now)) {
+                notificationService.notifyOnce(event.getCreator(), NotificationType.EVENT_SUSPENDED_PAST_DATE,
                         "Seu evento suspenso \"" + event.getTitle() + "\" já passou da data. "
                                 + "Edite a data para poder reativá-lo.", event.getId());
             }
@@ -42,18 +42,18 @@ public class EventReminderService {
         if (!start.isAfter(now)) return;
 
         EventStatus eventStatus = event.getStatus();
-        if (eventStatus == EventStatus.ATIVO) return;
+        if (eventStatus == EventStatus.ACTIVE) return;
 
-        String situation = eventStatus == EventStatus.AGUARDANDO_APROVACAO
+        String situation = eventStatus == EventStatus.PENDING
                 ? "o espaço ainda não foi confirmado."
                 : "ainda não tem espaço definido.";
         Duration untilStart = Duration.between(now, start);
 
         if (untilStart.compareTo(Duration.ofHours(24)) <= 0) {
-            notificationService.notifyOnce(event.getCreator(), NotificationType.EVENTO_SEM_ESPACO_24_HORAS,
+            notificationService.notifyOnce(event.getCreator(), NotificationType.NO_VENUE_EVENT_1_DAY,
                     "Seu evento \"" + event.getTitle() + "\" começa em menos de 24 horas e " + situation, event.getId());
         } else if (untilStart.compareTo(Duration.ofDays(3)) <= 0) {
-            notificationService.notifyOnce(event.getCreator(), NotificationType.EVENTO_SEM_ESPACO_3_DIAS,
+            notificationService.notifyOnce(event.getCreator(), NotificationType.NO_VENUE_EVENT_3_DAYS,
                     "Seu evento \"" + event.getTitle() + "\" é em até 3 dias e " + situation, event.getId());
         }
     }
